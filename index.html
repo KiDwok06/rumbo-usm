@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rumbo USM - Tus notas, tu próximo paso...</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            rumbo: {
+              bg: '#F6F7F2',
+              card: '#FFFFFF',
+              border: '#EAECE6',
+              dark: '#0D473B',
+              darkHover: '#09362C',
+              emerald: '#114B3E',
+              mint: '#52B788',
+              accent: '#2D6A4F',
+              cream: '#FAFBF6'
+            },
+            pastel: {
+              lavenderBg: '#EDE7F6',
+              lavenderText: '#4A148C',
+              mintBg: '#E8F5E9',
+              mintText: '#1B5E20',
+              blueBg: '#E3F2FD',
+              blueText: '#0D47A1',
+              amberBg: '#FFF3E0',
+              amberText: '#E65100',
+              redBg: '#FFEBEE',
+              redText: '#C62828'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- Babel Compiler -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F6F7F2;
+      color: #1F2937;
+    }
+    .rumbo-card-hero {
+      background-color: #0D473B;
+      background-image: radial-gradient(circle at 90% 10%, rgba(82, 183, 136, 0.18) 0%, transparent 50%);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(13, 71, 59, 0.2);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(13, 71, 59, 0.4);
+    }
+  </style>
+</head>
+<body class="h-full bg-rumbo-bg text-slate-800 antialiased selection:bg-rumbo-dark selection:text-white">
+  <div id="root" class="h-full"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    const PASSING_GRADE = 55;
+
+    // CATALOGO OFICIAL DE ASIGNATURAS USM CON PAUTAS 2026-2
+    const OFFICIAL_CATALOG = [
+      {
+        code: 'MAT070',
+        name: 'Cálculo',
+        fullName: 'Introducción al Cálculo',
+        credits: 6,
+        type: 'MAT070',
+        icon: 'fa-chart-line',
+        badgeBg: 'bg-rumbo-dark',
+        badgeText: 'text-white',
+        pastelBg: '#0D473B',
+        pastelText: '#FFFFFF',
+        description: '3 Certámenes (25% c/u) + 6 Controles (25% PQ). Certamen Global opcional.',
+        rules: {
+          formula: 'NP = 0.25 × C1 + 0.25 × C2 + 0.25 × C3 + 0.25 × PQ',
+          details: [
+            'Tres certámenes de desarrollo (C1, C2, C3).',
+            'Seis controles cortos en taller (Q1 a Q6). PQ es el promedio simple.',
+            'El Certamen Global opcional reemplaza la peor nota para maximizar el promedio final.',
+            'Aprobación directa con NP ≥ 55.'
+          ]
+        },
+        evaluations: [
+          { id: 'q1', name: 'Control 1 (Q1)', category: 'Controles', weight: 4.16, grade: 0, isGraded: false, date: '2026-08-21' },
+          { id: 'q2', name: 'Control 2 (Q2)', category: 'Controles', weight: 4.16, grade: 0, isGraded: false, date: '2026-08-28' },
+          { id: 'q3', name: 'Control 3 (Q3)', category: 'Controles', weight: 4.16, grade: 0, isGraded: false, date: '2026-09-04' },
+          { id: 'c1', name: 'Certamen 1 (C1)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-09-25' },
+          { id: 'q4', name: 'Control 4 (Q4)', category: 'Controles', weight: 4.16, grade: 0, isGraded: false, date: '2026-10-02' },
+          { id: 'q5', name: 'Control 5 (Q5)', category: 'Controles', weight: 4.16, grade: 0, isGraded: false, date: '2026-10-09' },
+          { id: 'c2', name: 'Certamen 2 (C2)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-10-23' },
+          { id: 'q6', name: 'Control 6 (Q6)', category: 'Controles', weight: 4.16, grade: 0, isGraded: false, date: '2026-10-30' },
+          { id: 'c3', name: 'Certamen 3 (C3)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-11-20' },
+        ],
+        extraConfig: { hasGlobal: false, globalGrade: 0 }
+      },
+      {
+        code: 'MAT061',
+        name: 'Álgebra',
+        fullName: 'Álgebra Lineal',
+        credits: 6,
+        type: 'MAT061',
+        icon: 'fa-table-cells',
+        badgeBg: 'bg-[#EDE7F6]',
+        badgeText: 'text-[#4A148C]',
+        pastelBg: '#EDE7F6',
+        pastelText: '#4A148C',
+        description: 'Certámenes (75%), Controles (25%), Factor Laboratorio Omega (0.9 a 1.1).',
+        rules: {
+          formula: 'NS = min((0.75 × NC + 0.25 × NQ) × ω, 100)',
+          details: [
+            'NC es el promedio simple de 3 Certámenes (C1, C2, C3).',
+            'NQ es el promedio simple de 3 Controles de ayudantía (Q1, Q2, Q3).',
+            'Factor Omega (ω) de Laboratorio: Si 55 ≤ NL ≤ 100 ⇒ ω = 79/90 + NL/450. (NL = 0.3*Asistencia + 0.35*C1 + 0.35*C2).'
+          ]
+        },
+        evaluations: [
+          { id: 'q1', name: 'Control 1 (Q1)', category: 'Controles', weight: 8.33, grade: 0, isGraded: false, date: '2026-08-24' },
+          { id: 'c1', name: 'Certamen 1 (C1)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-09-07' },
+          { id: 'q2', name: 'Control 2 (Q2)', category: 'Controles', weight: 8.33, grade: 0, isGraded: false, date: '2026-10-05' },
+          { id: 'c2', name: 'Certamen 2 (C2)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-10-19' },
+          { id: 'q3', name: 'Control 3 (Q3)', category: 'Controles', weight: 8.33, grade: 0, isGraded: false, date: '2026-11-09' },
+          { id: 'c3', name: 'Certamen 3 (C3)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-11-23' },
+        ],
+        extraConfig: { labAsistencia: 100, labCtrl1: 55, labCtrl2: 55, hasGlobal: false, globalGrade: 0 }
+      },
+      {
+        code: 'FIS11125',
+        name: 'Física',
+        fullName: 'Física General Mecánica',
+        credits: 6,
+        type: 'FIS111',
+        icon: 'fa-atom',
+        badgeBg: 'bg-[#E8F5E9]',
+        badgeText: 'text-[#1B5E20]',
+        pastelBg: '#E8F5E9',
+        pastelText: '#1B5E20',
+        description: 'Certámenes (75%), Controles (10% top 4), Tareas (15% top 3), NL ≥ 55 y Factor α.',
+        rules: {
+          formula: 'PS = α × [0.8 × (0.75 × PCe + 0.10 × PCo + 0.15 × PTa) + 0.20 × NL]',
+          details: [
+            'PCo elimina la peor nota de 5 controles.',
+            'PTa elimina las 2 peores notas de 5 tareas.',
+            'Factor Asistencia α = 1.0 si asistencia ≥ 80%; en caso contrario α = 0.5.',
+            'Requisito: cada certamen ≥ 50 y NL ≥ 55.'
+          ]
+        },
+        evaluations: [
+          { id: 'ta1', name: 'Tarea 1 (Ta1)', category: 'Tareas', weight: 3.0, grade: 0, isGraded: false, date: '2026-08-11' },
+          { id: 'ta2', name: 'Tarea 2 (Ta2)', category: 'Tareas', weight: 3.0, grade: 0, isGraded: false, date: '2026-08-25' },
+          { id: 'co1', name: 'Control 1 (Co1)', category: 'Controles', weight: 2.5, grade: 0, isGraded: false, date: '2026-08-28' },
+          { id: 'ce1', name: 'Certamen 1 (Ce1)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-09-07' },
+          { id: 'co2', name: 'Control 2 (Co2)', category: 'Controles', weight: 2.5, grade: 0, isGraded: false, date: '2026-09-25' },
+          { id: 'ta3', name: 'Tarea 3 (Ta3)', category: 'Tareas', weight: 3.0, grade: 0, isGraded: false, date: '2026-09-29' },
+          { id: 'co3', name: 'Control 3 (Co3)', category: 'Controles', weight: 2.5, grade: 0, isGraded: false, date: '2026-10-09' },
+          { id: 'ta4', name: 'Tarea 4 (Ta4)', category: 'Tareas', weight: 3.0, grade: 0, isGraded: false, date: '2026-10-13' },
+          { id: 'ce2', name: 'Certamen 2 (Ce2)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-10-19' },
+          { id: 'co4', name: 'Control 4 (Co4)', category: 'Controles', weight: 2.5, grade: 0, isGraded: false, date: '2026-10-30' },
+          { id: 'ta5', name: 'Tarea 5 (Ta5)', category: 'Tareas', weight: 3.0, grade: 0, isGraded: false, date: '2026-11-10' },
+          { id: 'co5', name: 'Control 5 (Co5)', category: 'Controles', weight: 2.5, grade: 0, isGraded: false, date: '2026-11-13' },
+          { id: 'ce3', name: 'Certamen 3 (Ce3)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-11-16' },
+        ],
+        extraConfig: { labGrade: 55, attendanceAlpha: 1.0, hasGlobal: false, globalGrade: 0 }
+      },
+      {
+        code: 'INF129',
+        name: 'Programación',
+        fullName: 'Introducción a la Programación',
+        credits: 5,
+        type: 'INF129',
+        icon: 'fa-code',
+        badgeBg: 'bg-[#FFF3E0]',
+        badgeText: 'text-[#E65100]',
+        pastelBg: '#FFF3E0',
+        pastelText: '#E65100',
+        description: 'Certámenes (50%), CTL Lab (20%), Tareas Ayudantía (20%), Formativas (5%), ECA (5%).',
+        rules: {
+          formula: 'P = 0.50 × C + 0.20 × CTL + 0.20 × T + 0.05 × EF + 0.05 × ECA',
+          details: [
+            'Dos certámenes en papel (50% promedio C). Recuperativo reemplaza la menor nota.',
+            'Controles en Laboratorio CTL (20%). Tareas en Ayudantía T (20%).',
+            'Requisito obligatorio: Promedio de certámenes C ≥ 55 para aprobar.'
+          ]
+        },
+        evaluations: [
+          { id: 'c1', name: 'Certamen 1 (Papel)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-10-09' },
+          { id: 'ctl', name: 'Controles Lab (CTL)', category: 'Controles', weight: 20, grade: 0, isGraded: false, date: '2026-11-13' },
+          { id: 't', name: 'Tareas Ayudantía (T)', category: 'Tareas', weight: 20, grade: 0, isGraded: false, date: '2026-11-06' },
+          { id: 'ef', name: 'Evaluaciones Formativas (EF)', category: 'Laboratorio & Formativas', weight: 5, grade: 0, isGraded: false, date: '2026-11-20' },
+          { id: 'eca', name: 'Ejercicios Autocorregidos (ECA)', category: 'Laboratorio & Formativas', weight: 5, grade: 0, isGraded: false, date: '2026-11-20' },
+          { id: 'c2', name: 'Certamen 2 (Papel)', category: 'Certámenes', weight: 25, grade: 0, isGraded: false, date: '2026-11-20' },
+        ],
+        extraConfig: { hasRecuperativo: false, recGrade: 0 }
+      }
+    ];
+
+    const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    function App() {
+      // ESTADOS PRINCIPALES
+      const [semesters, setSemesters] = useState([
+        { id: 'sem_2026_2', name: '2026 · 2°', fullName: 'Semestre 2026-2', courses: [] },
+        { id: 'sem_2026_1', name: '2026 · 1°', fullName: 'Semestre 2026-1', courses: [] }
+      ]);
+      const [activeSemesterId, setActiveSemesterId] = useState('sem_2026_2');
+      const [activeTab, setActiveTab] = useState('my_notes'); 
+      const [activeCourseId, setActiveCourseId] = useState(null);
+
+      // CALENDARIO VISTAS Y FECHAS
+      const [calendarViewMode, setCalendarViewMode] = useState('grid'); // 'grid' | 'list'
+      const [currentYear, setCurrentYear] = useState(2026);
+      const [currentMonthIdx, setCurrentMonthIdx] = useState(7); // Agosto (0-indexed)
+
+      // EVENTOS CUSTOM / MANUELES
+      const [customEvents, setCustomEvents] = useState([]);
+
+      // MODALES
+      const [showRuleModal, setShowRuleModal] = useState(false);
+      const [showAddSemesterModal, setShowAddSemesterModal] = useState(false);
+      const [showAddCourseToSemModal, setShowAddCourseToSemModal] = useState(null); // semesterId
+      const [showAddEventModal, setShowAddEventModal] = useState(false);
+      const [showCustomCourseModal, setShowCustomCourseModal] = useState(false);
+
+      // FORMULARIOS
+      const [newSemName, setNewSemName] = useState('');
+      const [eventTitle, setEventTitle] = useState('');
+      const [eventDate, setEventDate] = useState('');
+      const [eventCode, setEventCode] = useState('');
+      const [eventType, setEventType] = useState('Certamen');
+
+      const [customName, setCustomName] = useState('');
+      const [customCode, setCustomCode] = useState('');
+      const [customCredits, setCustomCredits] = useState(5);
+
+      // CARGA DESDE LOCALSTORAGE
+      useEffect(() => {
+        try {
+          const saved = localStorage.getItem('rumbo_usm_v3_data');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.semesters && parsed.semesters.length > 0) {
+              setSemesters(parsed.semesters);
+              setActiveSemesterId(parsed.activeSemesterId || parsed.semesters[0].id);
+            }
+            if (parsed.customEvents) setCustomEvents(parsed.customEvents);
+          } else {
+            // Carga inicial sugerida
+            const defaultSem = {
+              id: 'sem_2026_2',
+              name: '2026 · 2°',
+              fullName: 'Semestre 2026-2',
+              courses: OFFICIAL_CATALOG.map(c => ({
+                ...c,
+                id: 'course_' + c.code,
+                evaluations: c.evaluations.map((ev, idx) => ({ ...ev, id: `ev_${c.code}_${idx}` }))
+              }))
+            };
+            setSemesters([defaultSem]);
+            setActiveCourseId('course_MAT070');
+          }
+        } catch (e) {
+          console.error("Error loading localStorage data:", e);
+        }
+      }, []);
+
+      // GUARDADO EN LOCALSTORAGE
+      useEffect(() => {
+        if (semesters.length > 0) {
+          const payload = { semesters, activeSemesterId, customEvents };
+          localStorage.setItem('rumbo_usm_v3_data', JSON.stringify(payload));
+        }
+      }, [semesters, activeSemesterId, customEvents]);
+
+      // SEMESTRE ACTIVO
+      const currentSemester = useMemo(() => {
+        return semesters.find(s => s.id === activeSemesterId) || semesters[0];
+      }, [semesters, activeSemesterId]);
+
+      // RAMO ACTIVO
+      const activeCourse = useMemo(() => {
+        if (!currentSemester || !activeCourseId) return null;
+        return currentSemester.courses.find(c => c.id === activeCourseId) || currentSemester.courses[0] || null;
+      }, [currentSemester, activeCourseId]);
+
+      // CALCULADORA DE NOTAS DE RAMO
+      const calculateCourse = (course) => {
+        if (!course) return { finalGrade: 0, gradedWeight: 0, remainingWeight: 100, neededGrade: 0, statusLabel: 'Sin evaluar', statusColor: 'bg-amber-100 text-amber-900' };
+
+        const evs = course.evaluations || [];
+        let gradedWeight = 0;
+
+        // MAT070
+        if (course.type === 'MAT070') {
+          let certs = evs.filter(e => e.category === 'Certámenes' || e.id.includes('c'));
+          let controls = evs.filter(e => e.category === 'Controles' || e.id.includes('q'));
+
+          let qSum = 0, qCount = 0;
+          controls.forEach(q => {
+            if (q.isGraded) { qSum += parseFloat(q.grade) || 0; qCount++; }
+          });
+          const pq = qCount > 0 ? (qSum / qCount) : 0;
+
+          let c1 = certs.find(e => e.id.includes('c1'))?.isGraded ? parseFloat(certs.find(e => e.id.includes('c1')).grade) : 0;
+          let c2 = certs.find(e => e.id.includes('c2'))?.isGraded ? parseFloat(certs.find(e => e.id.includes('c2')).grade) : 0;
+          let c3 = certs.find(e => e.id.includes('c3'))?.isGraded ? parseFloat(certs.find(e => e.id.includes('c3')).grade) : 0;
+
+          if (course.extraConfig?.hasGlobal && course.extraConfig?.globalGrade > 0) {
+            const g = parseFloat(course.extraConfig.globalGrade);
+            const minC = Math.min(c1, c2, c3);
+            if (g > minC) {
+              if (minC === c1) c1 = g;
+              else if (minC === c2) c2 = g;
+              else c3 = g;
+            }
+          }
+
+          const gradedCerts = certs.filter(e => e.isGraded).length;
+          gradedWeight = gradedCerts * 25 + (qCount / 6) * 25;
+          const np = 0.25 * c1 + 0.25 * c2 + 0.25 * c3 + 0.25 * pq;
+          const remainingWeight = Math.max(0, 100 - gradedWeight);
+          
+          let neededGrade = remainingWeight > 0 ? ((PASSING_GRADE - np) / (remainingWeight / 100)) : 0;
+          let statusLabel = 'En Evaluación ⚠️';
+          let statusColor = 'bg-amber-100 text-amber-900 border-amber-300';
+
+          if (np >= PASSING_GRADE) {
+            statusLabel = 'Aprobado ⚡';
+            statusColor = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+          } else if (remainingWeight === 0) {
+            statusLabel = 'Reprobado ❌';
+            statusColor = 'bg-rose-100 text-rose-900 border-rose-300';
+          }
+
+          return {
+            finalGrade: Math.round(np * 10) / 10,
+            gradedWeight: Math.round(gradedWeight),
+            remainingWeight: Math.round(remainingWeight),
+            neededGrade: Math.round(neededGrade * 10) / 10,
+            statusLabel, statusColor
+          };
+        }
+
+        // MAT061
+        if (course.type === 'MAT061') {
+          let certs = evs.filter(e => e.category === 'Certámenes' || e.id.includes('c'));
+          let controls = evs.filter(e => e.category === 'Controles' || e.id.includes('q'));
+
+          let cSum = 0, cCount = 0;
+          certs.forEach(c => {
+            if (c.isGraded) { cSum += parseFloat(c.grade) || 0; cCount++; }
+          });
+          const nc = cCount > 0 ? (cSum / 3) : 0;
+
+          let qSum = 0, qCount = 0;
+          controls.forEach(q => {
+            if (q.isGraded) { qSum += parseFloat(q.grade) || 0; qCount++; }
+          });
+          const nq = qCount > 0 ? (qSum / 3) : 0;
+
+          const asist = parseFloat(course.extraConfig?.labAsistencia ?? 100);
+          const ctl1 = parseFloat(course.extraConfig?.labCtrl1 ?? 55);
+          const ctl2 = parseFloat(course.extraConfig?.labCtrl2 ?? 55);
+          const nl = 0.30 * asist + 0.35 * ctl1 + 0.35 * ctl2;
+
+          let omega = nl >= 55 ? ((79 / 90) + (nl / 450)) : ((9 / 10) + (nl / 550));
+          const ns = Math.min(100, (0.75 * nc + 0.25 * nq) * omega);
+
+          gradedWeight = (cCount / 3) * 75 + (qCount / 3) * 25;
+          const remainingWeight = Math.max(0, 100 - gradedWeight);
+          let neededGrade = remainingWeight > 0 ? ((PASSING_GRADE - ns) / (remainingWeight / 100)) : 0;
+
+          let statusLabel = ns >= PASSING_GRADE ? 'Aprobado ⚡' : 'En Evaluación ⚠️';
+          let statusColor = ns >= PASSING_GRADE ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300';
+
+          return {
+            finalGrade: Math.round(ns * 10) / 10,
+            gradedWeight: Math.round(gradedWeight),
+            remainingWeight: Math.round(remainingWeight),
+            neededGrade: Math.round(neededGrade * 10) / 10,
+            statusLabel, statusColor
+          };
+        }
+
+        // FIS111
+        if (course.type === 'FIS111') {
+          let certs = evs.filter(e => e.category === 'Certámenes');
+          let controls = evs.filter(e => e.category === 'Controles');
+          let tareas = evs.filter(e => e.category === 'Tareas');
+
+          let cSum = 0, cCount = 0;
+          certs.forEach(c => {
+            if (c.isGraded) { cSum += parseFloat(c.grade) || 0; cCount++; }
+          });
+          const pce = cCount > 0 ? (cSum / cCount) : 0;
+
+          let coGrades = controls.filter(c => c.isGraded).map(c => parseFloat(c.grade) || 0).sort((a,b)=>b-a);
+          let top4Co = coGrades.slice(0, 4);
+          const pco = top4Co.length > 0 ? (top4Co.reduce((a,b)=>a+b, 0) / top4Co.length) : 0;
+
+          let taGrades = tareas.filter(t => t.isGraded).map(t => parseFloat(t.grade) || 0).sort((a,b)=>b-a);
+          let top3Ta = taGrades.slice(0, 3);
+          const pta = top3Ta.length > 0 ? (top3Ta.reduce((a,b)=>a+b, 0) / top3Ta.length) : 0;
+
+          const nl = parseFloat(course.extraConfig?.labGrade ?? 55);
+          const alpha = parseFloat(course.extraConfig?.attendanceAlpha ?? 1.0);
+
+          let ps = alpha * (0.8 * (0.75 * pce + 0.10 * pco + 0.15 * pta) + 0.2 * nl);
+
+          gradedWeight = (cCount / 3) * 60 + (coGrades.length / 5) * 8 + (taGrades.length / 5) * 12 + 20;
+          const remainingWeight = Math.max(0, 100 - Math.round(gradedWeight));
+          let neededGrade = remainingWeight > 0 ? ((PASSING_GRADE - ps) / (remainingWeight / 100)) : 0;
+
+          let statusLabel = ps >= PASSING_GRADE ? 'Aprobado ⚡' : 'En Evaluación ⚠️';
+          let statusColor = ps >= PASSING_GRADE ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300';
+
+          return {
+            finalGrade: Math.round(ps * 10) / 10,
+            gradedWeight: Math.round(gradedWeight),
+            remainingWeight: Math.round(remainingWeight),
+            neededGrade: Math.round(neededGrade * 10) / 10,
+            statusLabel, statusColor
+          };
+        }
+
+        // INF129
+        if (course.type === 'INF129') {
+          let c1Obj = evs.find(e => e.id.includes('c1'));
+          let c2Obj = evs.find(e => e.id.includes('c2'));
+          let c1 = c1Obj?.isGraded ? parseFloat(c1Obj.grade) : 0;
+          let c2 = c2Obj?.isGraded ? parseFloat(c2Obj.grade) : 0;
+          let cAvg = (c1 + c2) / 2;
+
+          let ctl = parseFloat(evs.find(e => e.id.includes('ctl'))?.grade || 0);
+          let t = parseFloat(evs.find(e => e.id.includes('t'))?.grade || 0);
+          let ef = parseFloat(evs.find(e => e.id.includes('ef'))?.grade || 0);
+          let eca = parseFloat(evs.find(e => e.id.includes('eca'))?.grade || 0);
+
+          let p = 0.50 * cAvg + 0.20 * ctl + 0.20 * t + 0.05 * ef + 0.05 * eca;
+
+          evs.forEach(e => { if (e.isGraded) gradedWeight += e.weight; });
+          const remainingWeight = Math.max(0, 100 - Math.round(gradedWeight));
+          let neededGrade = remainingWeight > 0 ? ((PASSING_GRADE - p) / (remainingWeight / 100)) : 0;
+
+          let statusLabel = p >= PASSING_GRADE ? 'Aprobado ⚡' : 'En Evaluación ⚠️';
+          let statusColor = p >= PASSING_GRADE ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300';
+
+          return {
+            finalGrade: Math.round(p * 10) / 10,
+            gradedWeight: Math.round(gradedWeight),
+            remainingWeight: Math.round(remainingWeight),
+            neededGrade: Math.round(neededGrade * 10) / 10,
+            statusLabel, statusColor
+          };
+        }
+
+        // ESTANDAR
+        let sum = 0;
+        evs.forEach(ev => {
+          if (ev.isGraded) {
+            gradedWeight += ev.weight;
+            sum += (parseFloat(ev.grade) || 0) * (ev.weight / 100);
+          }
+        });
+        const remainingWeight = Math.max(0, 100 - Math.round(gradedWeight));
+        let neededGrade = remainingWeight > 0 ? ((PASSING_GRADE - sum) / (remainingWeight / 100)) : 0;
+
+        return {
+          finalGrade: Math.round(sum * 10) / 10,
+          gradedWeight: Math.round(gradedWeight),
+          remainingWeight: Math.round(remainingWeight),
+          neededGrade: Math.round(neededGrade * 10) / 10,
+          statusLabel: sum >= PASSING_GRADE ? 'Aprobado ⚡' : 'En Evaluación ⚠️',
+          statusColor: sum >= PASSING_GRADE ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300'
+        };
+      };
+
+      // CALCULO PPA DEL SEMESTRE
+      const semesterPPA = useMemo(() => {
+        if (!currentSemester || currentSemester.courses.length === 0) return 0;
+        let totalCredits = 0;
+        let weightedSum = 0;
+        currentSemester.courses.forEach(c => {
+          const res = calculateCourse(c);
+          const creds = parseInt(c.credits) || 1;
+          totalCredits += creds;
+          weightedSum += res.finalGrade * creds;
+        });
+        return totalCredits > 0 ? (weightedSum / totalCredits) : 0;
+      }, [currentSemester]);
+
+      // CALCULO PPA ACUMULADO GLOBAL
+      const globalPPA = useMemo(() => {
+        let totalCredits = 0;
+        let weightedSum = 0;
+        semesters.forEach(sem => {
+          (sem.courses || []).forEach(c => {
+            const res = calculateCourse(c);
+            const creds = parseInt(c.credits) || 1;
+            totalCredits += creds;
+            weightedSum += res.finalGrade * creds;
+          });
+        });
+        return totalCredits > 0 ? (weightedSum / totalCredits) : 0;
+      }, [semesters]);
+
+      // CALENDARIO CONSOLIDADO Y BIDIRECCIONAL
+      const calendarEvents = useMemo(() => {
+        const events = [];
+        if (!currentSemester) return events;
+
+        currentSemester.courses.forEach(c => {
+          (c.evaluations || []).forEach(ev => {
+            if (ev.date && ev.date.trim() !== '') {
+              events.push({
+                id: `ev_${c.id}_${ev.id}`,
+                courseId: c.id,
+                evId: ev.id,
+                courseCode: c.code,
+                courseName: c.name,
+                title: ev.name,
+                date: ev.date,
+                category: ev.category || 'Evaluación',
+                isGraded: ev.isGraded,
+                grade: ev.grade,
+                badgeBg: c.badgeBg,
+                badgeText: c.badgeText,
+                isSystem: true
+              });
+            }
+          });
+        });
+
+        customEvents.forEach(ce => {
+          events.push({
+            id: ce.id,
+            courseCode: ce.courseCode || 'USM',
+            courseName: ce.courseName || 'Personal',
+            title: ce.title,
+            date: ce.date,
+            category: ce.type || 'Hito',
+            badgeBg: 'bg-slate-700',
+            badgeText: 'text-white',
+            isSystem: false
+          });
+        });
+
+        return events.sort((a, b) => new Date(a.date) - new Date(b.date));
+      }, [currentSemester, customEvents]);
+
+      // ACTUALIZAR EVALUACIÓN (SINCRONIZACIÓN EN TIEMPO REAL CON FECHA)
+      const updateEvaluation = (courseId, evId, field, value) => {
+        setSemesters(prevSemesters => {
+          return prevSemesters.map(sem => {
+            const updatedCourses = sem.courses.map(course => {
+              if (course.id === courseId) {
+                const updatedEvs = course.evaluations.map(ev => {
+                  if (ev.id === evId) {
+                    const copy = { ...ev, [field]: value };
+                    if (field === 'grade') {
+                      let val = parseFloat(value) || 0;
+                      copy.grade = Math.max(0, Math.min(100, val));
+                    }
+                    return copy;
+                  }
+                  return ev;
+                });
+                return { ...course, evaluations: updatedEvs };
+              }
+              return course;
+            });
+            return { ...sem, courses: updatedCourses };
+          });
+        });
+      };
+
+      // ELIMINAR EVENTO / FECHA DEL CALENDARIO
+      const handleDeleteCalendarEvent = (eventObj) => {
+        if (!confirm(`¿Eliminar la fecha para "${eventObj.title}"?`)) return;
+
+        if (eventObj.isSystem) {
+          // Limpiar la fecha en el ramo correspondiente
+          updateEvaluation(eventObj.courseId, eventObj.evId, 'date', '');
+        } else {
+          // Eliminar de eventos personalizados
+          setCustomEvents(customEvents.filter(e => e.id !== eventObj.id));
+        }
+      };
+
+      // ELIMINAR ASIGNATURA DE UN SEMESTRE
+      const handleDeleteCourseFromSemester = (semId, courseId) => {
+        if (!confirm('¿Seguro que deseas eliminar esta asignatura de tu semestre?')) return;
+        setSemesters(prev => prev.map(s => {
+          if (s.id === semId) {
+            return { ...s, courses: s.courses.filter(c => c.id !== courseId) };
+          }
+          return s;
+        }));
+        if (activeCourseId === courseId) {
+          const remaining = (currentSemester?.courses || []).filter(c => c.id !== courseId);
+          setActiveCourseId(remaining.length > 0 ? remaining[0].id : null);
+        }
+      };
+
+      // CREAR NUEVO SEMESTRE
+      const handleCreateSemester = (e) => {
+        e.preventDefault();
+        if (!newSemName.trim()) return;
+        const semName = newSemName.trim();
+        const newSem = {
+          id: 'sem_' + Date.now(),
+          name: semName,
+          fullName: 'Semestre ' + semName,
+          courses: []
+        };
+        setSemesters([...semesters, newSem]);
+        setActiveSemesterId(newSem.id);
+        setShowAddSemesterModal(false);
+        setNewSemName('');
+      };
+
+      // ELIMINAR UN SEMESTRE COMPLETO
+      const handleDeleteSemester = (semId) => {
+        if (semesters.length <= 1) {
+          alert('Debes mantener al menos un semestre registrado.');
+          return;
+        }
+        if (!confirm('¿Deseas eliminar este semestre completo y todos sus ramos?')) return;
+        const updated = semesters.filter(s => s.id !== semId);
+        setSemesters(updated);
+        setActiveSemesterId(updated[0].id);
+      };
+
+      // AÑADIR RAMO A UN SEMESTRE ESPECÍFICO
+      const handleAddCourseToSemester = (semId, preset) => {
+        const newCourse = {
+          ...preset,
+          id: 'course_' + preset.code + '_' + Date.now(),
+          evaluations: preset.evaluations.map((ev, idx) => ({ ...ev, id: `ev_${preset.code}_${Date.now()}_${idx}` }))
+        };
+        setSemesters(prev => prev.map(s => s.id === semId ? { ...s, courses: [...s.courses, newCourse] } : s));
+        setShowAddCourseToSemModal(null);
+        if (semId === activeSemesterId) {
+          setActiveCourseId(newCourse.id);
+        }
+        if (window.confetti) window.confetti({ particleCount: 40, spread: 50, origin: { y: 0.6 } });
+      };
+
+      // REGISTRAR ASIGNATURA PERSONALIZADA
+      const handleCreateCustomCourse = (e) => {
+        e.preventDefault();
+        if (!customName.trim() || !showAddCourseToSemModal) return;
+        const semId = showAddCourseToSemModal;
+        const newCourse = {
+          id: 'course_custom_' + Date.now(),
+          code: customCode.trim().toUpperCase() || 'ASIG-' + Math.floor(Math.random() * 900 + 100),
+          name: customName.trim(),
+          fullName: customName.trim(),
+          credits: parseInt(customCredits) || 5,
+          type: 'STANDARD',
+          icon: 'fa-book',
+          badgeBg: 'bg-[#E3F2FD]',
+          badgeText: 'text-[#0D47A1]',
+          pastelBg: '#E3F2FD',
+          pastelText: '#0D47A1',
+          description: 'Asignatura ingresada manualmente.',
+          rules: {
+            formula: 'Suma ponderada simple',
+            details: ['Evaluaciones y porcentajes configurables libremente.']
+          },
+          evaluations: [
+            { id: 'ev_1', name: 'Certamen 1', category: 'Certámenes', weight: 30, grade: 0, isGraded: false, date: '' },
+            { id: 'ev_2', name: 'Certamen 2', category: 'Certámenes', weight: 30, grade: 0, isGraded: false, date: '' },
+            { id: 'ev_3', name: 'Certamen 3', category: 'Certámenes', weight: 30, grade: 0, isGraded: false, date: '' },
+            { id: 'ev_4', name: 'Controles y Tareas', category: 'Controles', weight: 10, grade: 0, isGraded: false, date: '' },
+          ],
+          extraConfig: {}
+        };
+        setSemesters(prev => prev.map(s => s.id === semId ? { ...s, courses: [...s.courses, newCourse] } : s));
+        setShowCustomCourseModal(false);
+        setShowAddCourseToSemModal(null);
+        setCustomName(''); setCustomCode('');
+      };
+
+      // REGISTRAR EVENTO MANUAL AL CALENDARIO
+      const handleAddEvent = (e) => {
+        e.preventDefault();
+        if (!eventTitle.trim() || !eventDate) return;
+        const newEv = {
+          id: 'ce_' + Date.now(),
+          title: eventTitle.trim(),
+          date: eventDate,
+          courseCode: eventCode.trim().toUpperCase() || 'USM',
+          type: eventType
+        };
+        setCustomEvents([...customEvents, newEv]);
+        setShowAddEventModal(false);
+        setEventTitle(''); setEventDate('');
+      };
+
+      const activeCalc = useMemo(() => calculateCourse(activeCourse), [activeCourse]);
+
+      // AGRUPAR EVALUACIONES POR TIPO PARA "MIS NOTAS"
+      const groupedEvaluations = useMemo(() => {
+        if (!activeCourse || !activeCourse.evaluations) return {};
+        const groups = {};
+        activeCourse.evaluations.forEach(ev => {
+          const cat = ev.category || 'Evaluaciones Generales';
+          if (!groups[cat]) groups[cat] = [];
+          groups[cat].push(ev);
+        });
+        return groups;
+      }, [activeCourse]);
+
+      // GENERACIÓN DE DÍAS DE CALENDARIO VISUAL PARA EL MES ACTUAL
+      const calendarGridDays = useMemo(() => {
+        const year = currentYear;
+        const month = currentMonthIdx; // 0..11
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        let startingDayOfWeek = firstDay.getDay(); // 0: Sun, 1: Mon...
+        startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1; // 0: Mon ... 6: Sun
+
+        const totalDays = lastDay.getDate();
+        const daysArray = [];
+
+        // Días de relleno anterior
+        for (let i = 0; i < startingDayOfWeek; i++) {
+          daysArray.push({ dayNumber: null, dateStr: null, isCurrentMonth: false });
+        }
+
+        // Días reales
+        for (let d = 1; d <= totalDays; d++) {
+          const monthStr = String(month + 1).padStart(2, '0');
+          const dayStr = String(d).padStart(2, '0');
+          const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+          const dayEvents = calendarEvents.filter(ev => ev.date === dateStr);
+          daysArray.push({
+            dayNumber: d,
+            dateStr,
+            isCurrentMonth: true,
+            events: dayEvents
+          });
+        }
+        return daysArray;
+      }, [currentYear, currentMonthIdx, calendarEvents]);
+
+      return (
+        <div className="min-h-screen flex flex-col md:flex-row bg-[#F6F7F2]">
+          
+          {/* BARRA LATERAL (SIDEBAR) */}
+          <aside className="w-full md:w-72 bg-[#FAFBF6] border-b md:border-b-0 md:border-r border-[#EAECE6] flex flex-col flex-shrink-0">
+            {/* LOGO RUMBO */}
+            <div className="p-5 border-b border-[#EAECE6] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rumbo-dark flex items-center justify-center text-white font-bold text-xl shadow-md">
+                  <i className="fa-solid fa-book-bookmark text-sm text-rumbo-mint"></i>
+                </div>
+                <div>
+                  <div className="font-extrabold text-2xl tracking-tight text-slate-900 leading-none">
+                    rumbo<span className="text-rumbo-mint">.</span>
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-500 block mt-0.5">Tus notas, tu próximo paso...</span>
+                </div>
+              </div>
+            </div>
+
+            {/* SELECTOR DE SEMESTRE TIPO PÍLDORA */}
+            <div className="px-5 py-4 border-b border-[#EAECE6]">
+              <div className="bg-[#EAECE6]/80 rounded-2xl p-1.5 flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-600 pl-3">Mi semestre</span>
+                <select
+                  value={activeSemesterId}
+                  onChange={(e) => setActiveSemesterId(e.target.value)}
+                  className="bg-white text-slate-900 font-extrabold text-xs rounded-xl px-3 py-1.5 border border-[#EAECE6] shadow-xs focus:outline-none cursor-pointer"
+                >
+                  {semesters.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* MENÚ PRINCIPAL */}
+            <div className="p-3 space-y-1 text-xs font-bold border-b border-[#EAECE6]">
+              <button
+                onClick={() => setActiveTab('my_notes')}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all ${
+                  activeTab === 'my_notes'
+                    ? 'bg-[#EAECE6]/90 text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:bg-[#EAECE6]/40'
+                }`}
+              >
+                <i className="fa-solid fa-[#0D473B] w-4 text-center text-slate-700"></i>
+                <span>Mis notas</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('calendar')}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all ${
+                  activeTab === 'calendar'
+                    ? 'bg-[#EAECE6]/90 text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:bg-[#EAECE6]/40'
+                }`}
+              >
+                <i className="fa-solid fa-calendar-days w-4 text-center text-slate-700"></i>
+                <span>Calendario de evaluaciones</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('office_hours')}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all ${
+                  activeTab === 'office_hours'
+                    ? 'bg-pastel-redBg text-pastel-redText shadow-xs'
+                    : 'text-slate-600 hover:bg-pastel-redBg/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <i className="fa-solid fa-[#0D473B] w-4 text-center text-pastel-redText"></i>
+                  <span>Horarios de consulta</span>
+                </div>
+                <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-full bg-pastel-redText text-white">
+                  Próximamente
+                </span>
+              </button>
+            </div>
+
+            {/* LISTA DE MIS ASIGNATURAS EN EL SEMESTRE ACTIVO */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+              <div className="flex items-center justify-between px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                <span>Mis Asignaturas ({currentSemester?.courses.length || 0})</span>
+                <button
+                  onClick={() => setShowAddCourseToSemModal(activeSemesterId)}
+                  className="hover:text-rumbo-dark transition-colors"
+                  title="Añadir ramo a este semestre"
+                >
+                  <i className="fa-solid fa-plus text-xs"></i>
+                </button>
+              </div>
+
+              {currentSemester?.courses.length === 0 ? (
+                <div className="text-center py-6 px-3 text-xs text-slate-400 font-medium">
+                  Sin ramos inscritos en este semestre.
+                </div>
+              ) : (
+                currentSemester.courses.map(course => {
+                  const isActive = activeCourseId === course.id && activeTab === 'my_notes';
+                  const res = calculateCourse(course);
+
+                  return (
+                    <div key={course.id} className="group flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setActiveCourseId(course.id);
+                          setActiveTab('my_notes');
+                        }}
+                        className={`flex-1 text-left p-2.5 rounded-2xl transition-all flex items-center justify-between ${
+                          isActive
+                            ? 'bg-rumbo-dark text-white shadow-md'
+                            : 'hover:bg-[#EAECE6]/50 text-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-xs ${
+                              isActive ? 'bg-white/20 text-white' : ''
+                            }`}
+                            style={!isActive ? { backgroundColor: course.pastelBg, color: course.pastelText } : {}}
+                          >
+                            <i className={`fa-solid ${course.icon || 'fa-book'}`}></i>
+                          </div>
+                          <div className="truncate">
+                            <div className="font-extrabold text-xs truncate leading-snug">{course.name}</div>
+                            <div className={`text-[10px] font-semibold ${isActive ? 'text-emerald-200' : 'text-slate-400'}`}>
+                              {course.code}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right flex-shrink-0 pl-1">
+                          <div className={`font-black text-xs ${
+                            isActive 
+                              ? 'text-white' 
+                              : res.finalGrade >= PASSING_GRADE 
+                              ? 'text-emerald-700' 
+                              : 'text-amber-700'
+                          }`}>
+                            {res.finalGrade.toFixed(1)}
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* BOTÓN BORRAR RAMO DIRECTO */}
+                      <button
+                        onClick={() => handleDeleteCourseFromSemester(activeSemesterId, course.id)}
+                        className="p-2 text-slate-300 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                        title="Quitar ramo"
+                      >
+                        <i className="fa-solid fa-trash-can text-xs"></i>
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* BOTONES DE BIBLIOTECA & ACCIONES */}
+            <div className="p-3 border-t border-[#EAECE6] space-y-1 text-xs font-bold">
+              <button
+                onClick={() => setActiveTab('catalog')}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-[#EAECE6] rounded-2xl hover:bg-[#EAECE6]/40 text-slate-700 transition-colors"
+              >
+                <i className="fa-solid fa-square-plus text-rumbo-dark"></i>
+                <span>Catálogo de Ramos USM</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('library')}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-[#EAECE6] rounded-2xl hover:bg-[#EAECE6]/40 text-slate-700 transition-colors"
+              >
+                <i className="fa-solid fa-landmark text-rumbo-dark"></i>
+                <span>Biblioteca de Semestres</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* ÁREA PRINCIPAL */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-5xl mx-auto w-full space-y-6">
+
+            {/* TAB: MIS NOTAS */}
+            {activeTab === 'my_notes' && (
+              <div className="space-y-6">
+                
+                {activeCourse ? (
+                  <>
+                    {/* HERO CARD DE RAMO */}
+                    <div className="rumbo-card-hero text-white rounded-3xl p-6 sm:p-8 shadow-lg border border-rumbo-dark flex flex-col justify-between gap-6 relative overflow-hidden">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 rounded-full text-xs font-black bg-white/10 border border-white/20 uppercase tracking-wide">
+                              {activeCourse.code}
+                            </span>
+                            <span className="text-xs font-semibold text-emerald-200">
+                              {activeCourse.credits} SCT
+                            </span>
+                          </div>
+                          <h2 className="text-2xl sm:text-3xl font-black mt-2 leading-tight">
+                            {activeCourse.fullName || activeCourse.name}
+                          </h2>
+                        </div>
+
+                        <button
+                          onClick={() => setShowRuleModal(true)}
+                          className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white font-extrabold text-xs rounded-full border border-white/30 backdrop-blur-md transition-all flex items-center gap-2 flex-shrink-0"
+                        >
+                          <i className="fa-solid fa-book-open"></i>
+                          <span>Ver reglas</span>
+                        </button>
+                      </div>
+
+                      {/* NOTA Y REQUISITOS */}
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-6xl sm:text-7xl font-black tracking-tighter text-white">
+                            {activeCalc.finalGrade.toFixed(1)}
+                          </span>
+                          <span className="text-sm font-semibold text-emerald-200">
+                            / 100.0
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 text-right sm:text-right">
+                          <span className={`inline-block px-3.5 py-1.5 rounded-full text-xs font-black border ${activeCalc.statusColor}`}>
+                            {activeCalc.statusLabel}
+                          </span>
+                          <p className="text-xs text-emerald-100 max-w-sm">
+                            {activeCalc.remainingWeight > 0 ? (
+                              activeCalc.neededGrade <= 0 ? (
+                                <span>¡Con tus notas actuales ya aseguraste la aprobación del ramo! 🥳</span>
+                              ) : activeCalc.neededGrade > 100 ? (
+                                <span>Requiere certamen global voluntario para optar a la aprobación. 🚨</span>
+                              ) : (
+                                <span>Necesitas un <strong>{activeCalc.neededGrade.toFixed(1)}</strong> promedio en las evaluaciones pendientes ({activeCalc.remainingWeight}%) para aprobar con 55.</span>
+                              )
+                            ) : (
+                              <span>Evaluaciones completadas.</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* PROGRESO */}
+                      <div className="space-y-1.5 pt-2 border-t border-white/10">
+                        <div className="flex justify-between text-xs font-bold text-emerald-200">
+                          <span>Evaluado: {activeCalc.gradedWeight}%</span>
+                          <span>Pendiente: {activeCalc.remainingWeight}%</span>
+                        </div>
+                        <div className="w-full bg-white/15 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-white h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${activeCalc.gradedWeight}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* EVALUACIONES AGRUPADAS LIMPIAMENTE POR TIPO */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-extrabold text-lg text-slate-900">Evaluaciones y Ponderaciones</h3>
+                        <span className="text-xs text-slate-400 font-bold">Agrupadas por tipo</span>
+                      </div>
+
+                      {Object.keys(groupedEvaluations).map(categoryName => {
+                        const evList = groupedEvaluations[categoryName];
+                        const gradedInGroup = evList.filter(e => e.isGraded).length;
+
+                        return (
+                          <div key={categoryName} className="bg-white rounded-3xl border border-[#EAECE6] shadow-xs overflow-hidden">
+                            {/* ENCABEZADO DE GRUPO */}
+                            <div className="bg-[#FAFBF6] px-5 py-3 border-b border-[#EAECE6] flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-rumbo-dark"></span>
+                                <h4 className="font-black text-sm text-slate-900">{categoryName}</h4>
+                                <span className="text-xs font-bold text-slate-400">({evList.length})</span>
+                              </div>
+                              <span className="text-xs font-bold text-slate-500">
+                                {gradedInGroup} de {evList.length} evaluados
+                              </span>
+                            </div>
+
+                            {/* TABLA DEL GRUPO */}
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-xs sm:text-sm">
+                                <thead className="bg-[#FAFBF6]/50 text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#EAECE6]">
+                                  <tr>
+                                    <th className="py-2.5 px-4 w-12 text-center">Rendido</th>
+                                    <th className="py-2.5 px-4">Evaluación</th>
+                                    <th className="py-2.5 px-4 w-28">Ponderación</th>
+                                    <th className="py-2.5 px-4 w-36">Nota (0 - 100)</th>
+                                    <th className="py-2.5 px-4 w-40">Fecha</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#EAECE6]">
+                                  {evList.map(ev => (
+                                    <tr key={ev.id} className="hover:bg-[#FAFBF6] transition-colors">
+                                      <td className="py-3 px-4 text-center">
+                                        <input
+                                          type="checkbox"
+                                          checked={ev.isGraded}
+                                          onChange={(e) => updateEvaluation(activeCourse.id, ev.id, 'isGraded', e.target.checked)}
+                                          className="w-4.5 h-4.5 text-rumbo-dark rounded border-gray-300 cursor-pointer"
+                                        />
+                                      </td>
+                                      <td className="py-3 px-4 font-bold text-slate-900">
+                                        {ev.name}
+                                      </td>
+                                      <td className="py-3 px-4 font-bold text-slate-500">
+                                        {ev.weight}%
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <input
+                                          type="number"
+                                          min="0" max="100"
+                                          disabled={!ev.isGraded}
+                                          value={ev.grade}
+                                          onChange={(e) => updateEvaluation(activeCourse.id, ev.id, 'grade', e.target.value)}
+                                          className={`w-24 border rounded-xl px-3 py-1.5 font-black text-center text-sm transition-all ${
+                                            !ev.isGraded
+                                              ? 'bg-[#EAECE6]/50 text-slate-400 border-[#EAECE6] cursor-not-allowed opacity-50'
+                                              : 'bg-white text-slate-900 border-[#EAECE6] shadow-xs focus:ring-2 focus:ring-rumbo-dark'
+                                          }`}
+                                        />
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        {/* INPUT DE FECHA CONECTADO BIDIRECCIONALMENTE CON EL CALENDARIO */}
+                                        <input
+                                          type="date"
+                                          value={ev.date || ''}
+                                          onChange={(e) => updateEvaluation(activeCourse.id, ev.id, 'date', e.target.value)}
+                                          className="bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-rumbo-dark"
+                                        />
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-white rounded-3xl p-10 text-center border border-[#EAECE6] shadow-xs space-y-4 my-8">
+                    <div className="w-16 h-16 mx-auto rounded-2xl bg-rumbo-bg flex items-center justify-center text-rumbo-dark text-3xl">
+                      <i className="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900">Bienvenido a Rumbo USM</h3>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto">
+                      Agrega o selecciona un ramo para comenzar a gestionar tus calificaciones.
+                    </p>
+                    <button
+                      onClick={() => setShowAddCourseToSemModal(activeSemesterId)}
+                      className="px-6 py-3 bg-rumbo-dark hover:bg-rumbo-darkHover text-white font-extrabold text-xs rounded-2xl shadow-md transition-all inline-flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-square-plus"></i>
+                      <span>Añadir Ramo a este Semestre</span>
+                    </button>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* TAB: CALENDARIO DE EVALUACIONES CON 2 VISTAS */}
+            {activeTab === 'calendar' && (
+              <div className="space-y-6">
+                
+                {/* CABECERA DEL CALENDARIO Y SELECTOR DE VISTAS */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900">Calendario de Evaluaciones</h2>
+                    <p className="text-xs text-slate-500">Planifica certámenes, entregas y controles con sincronización en tiempo real.</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* BOTONES CAMBIO DE VISTA */}
+                    <div className="bg-white border border-[#EAECE6] p-1 rounded-2xl flex items-center shadow-xs">
+                      <button
+                        onClick={() => setCalendarViewMode('grid')}
+                        className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 ${
+                          calendarViewMode === 'grid'
+                            ? 'bg-rumbo-dark text-white shadow-xs'
+                            : 'text-slate-600 hover:bg-[#FAFBF6]'
+                        }`}
+                      >
+                        <i className="fa-solid fa-calendar-grid"></i>
+                        <span>Vista Calendario Visual</span>
+                      </button>
+
+                      <button
+                        onClick={() => setCalendarViewMode('list')}
+                        className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 ${
+                          calendarViewMode === 'list'
+                            ? 'bg-rumbo-dark text-white shadow-xs'
+                            : 'text-slate-600 hover:bg-[#FAFBF6]'
+                        }`}
+                      >
+                        <i className="fa-solid fa-list-ul"></i>
+                        <span>Vista Lista</span>
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => setShowAddEventModal(true)}
+                      className="px-3.5 py-2.5 bg-rumbo-dark hover:bg-rumbo-darkHover text-white font-extrabold text-xs rounded-2xl shadow-xs transition-all flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-plus"></i>
+                      <span>Añadir Fecha</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* VISTA 1: CALENDARIO VISUAL EN REJILLA POR MESES */}
+                {calendarViewMode === 'grid' && (
+                  <div className="bg-white rounded-3xl border border-[#EAECE6] shadow-xs p-6 space-y-6">
+                    
+                    {/* NAVEGADOR DE MES */}
+                    <div className="flex items-center justify-between border-b border-[#EAECE6] pb-4">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-black text-xl text-slate-900">
+                          {MONTH_NAMES[currentMonthIdx]} {currentYear}
+                        </h3>
+                        <span className="text-xs font-extrabold text-rumbo-dark bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                          2026 USM
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (currentMonthIdx === 0) {
+                              setCurrentMonthIdx(11);
+                              setCurrentYear(currentYear - 1);
+                            } else {
+                              setCurrentMonthIdx(currentMonthIdx - 1);
+                            }
+                          }}
+                          className="w-9 h-9 rounded-xl border border-[#EAECE6] hover:bg-[#FAFBF6] flex items-center justify-center text-slate-700 font-bold"
+                        >
+                          <i className="fa-solid fa-chevron-left"></i>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            setCurrentMonthIdx(7);
+                            setCurrentYear(2026);
+                          }}
+                          className="px-3 py-1.5 rounded-xl border border-[#EAECE6] hover:bg-[#FAFBF6] text-xs font-bold text-slate-700"
+                        >
+                          Hoy
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (currentMonthIdx === 11) {
+                              setCurrentMonthIdx(0);
+                              setCurrentYear(currentYear + 1);
+                            } else {
+                              setCurrentMonthIdx(currentMonthIdx + 1);
+                            }
+                          }}
+                          className="w-9 h-9 rounded-xl border border-[#EAECE6] hover:bg-[#FAFBF6] flex items-center justify-center text-slate-700 font-bold"
+                        >
+                          <i className="fa-solid fa-chevron-right"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* DÍAS DE LA SEMANA */}
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-black text-slate-400 uppercase tracking-wider">
+                      <div>Lun</div>
+                      <div>Mar</div>
+                      <div>Mié</div>
+                      <div>Jue</div>
+                      <div>Vie</div>
+                      <div>Sáb</div>
+                      <div>Dom</div>
+                    </div>
+
+                    {/* REJILLA DE DÍAS DEL MES (AL ESTILO CALENDARIO 2026) */}
+                    <div className="grid grid-cols-7 gap-2">
+                      {calendarGridDays.map((cell, idx) => {
+                        if (!cell.isCurrentMonth) {
+                          return <div key={idx} className="min-h-[90px] bg-[#FAFBF6]/40 rounded-2xl border border-transparent"></div>;
+                        }
+
+                        const hasEvents = cell.events && cell.events.length > 0;
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`min-h-[90px] p-2 rounded-2xl border transition-all flex flex-col justify-between ${
+                              hasEvents 
+                                ? 'bg-white border-emerald-300 shadow-xs ring-2 ring-emerald-500/10' 
+                                : 'bg-white border-[#EAECE6] hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className={`text-xs font-extrabold ${hasEvents ? 'text-rumbo-dark font-black' : 'text-slate-700'}`}>
+                                {cell.dayNumber}
+                              </span>
+                              {hasEvents && (
+                                <span className="w-2 h-2 rounded-full bg-rumbo-mint"></span>
+                              )}
+                            </div>
+
+                            {/* LISTADO DE EVENTOS DEL DÍA */}
+                            <div className="space-y-1 my-1 overflow-y-auto max-h-[60px]">
+                              {cell.events.map(ev => (
+                                <div
+                                  key={ev.id}
+                                  className="group flex items-center justify-between px-1.5 py-0.5 rounded-lg text-[10px] font-black bg-rumbo-dark text-white truncate shadow-2xs"
+                                >
+                                  <span className="truncate" title={`${ev.courseCode}: ${ev.title}`}>
+                                    {ev.courseCode} {ev.title}
+                                  </span>
+                                  {/* BOTÓN BORRAR EVENTO / FECHA */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteCalendarEvent(ev);
+                                    }}
+                                    className="ml-1 text-emerald-200 hover:text-rose-300 transition-colors"
+                                    title="Borrar fecha"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* VISTA 2: LISTA CRONOLÓGICA POR MESES */}
+                {calendarViewMode === 'list' && (
+                  <div className="bg-white rounded-3xl border border-[#EAECE6] shadow-xs p-6 space-y-4">
+                    {calendarEvents.length === 0 ? (
+                      <div className="text-center py-12 text-slate-400 text-xs font-medium">
+                        No hay fechas registradas en este semestre.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {calendarEvents.map(ev => (
+                          <div 
+                            key={ev.id}
+                            className="p-4 rounded-2xl border border-[#EAECE6] bg-[#FAFBF6] hover:bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-rumbo-dark text-white flex items-center justify-center font-black text-xs">
+                                {ev.category.substring(0, 3).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-black text-xs text-rumbo-dark">{ev.courseCode}</span>
+                                  <h4 className="font-extrabold text-sm text-slate-900">{ev.title}</h4>
+                                </div>
+                                <span className="text-xs text-slate-500">{ev.courseName}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 self-end sm:self-center text-xs">
+                              <div className="text-right">
+                                <span className="font-black text-slate-900 block">{ev.date}</span>
+                              </div>
+                              {/* BOTÓN DE ELIMINAR FECHA (🗑️) */}
+                              <button
+                                onClick={() => handleDeleteCalendarEvent(ev)}
+                                className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                                title="Eliminar fecha"
+                              >
+                                <i className="fa-solid fa-trash-can text-sm"></i>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* TAB: HORARIOS DE CONSULTA */}
+            {activeTab === 'office_hours' && (
+              <div className="space-y-6">
+                <div className="bg-pastel-redBg border border-pastel-redText/30 rounded-3xl p-6 text-pastel-redText flex items-start gap-4 shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-pastel-redText text-white flex items-center justify-center font-bold text-2xl flex-shrink-0">
+                    <i className="fa-solid fa-person-digging"></i>
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg">Módulo de Horarios de Atención Docente</h3>
+                    <p className="text-xs mt-1 font-medium leading-relaxed opacity-90">
+                      Esta sección se mantiene indicada como **Próximamente / En Desarrollo**. Pronto podrás sincronizar los horarios de consulta presencial y virtual de tus profesores de Cátedra y Ayudantes de MAT070, FIS111, MAT061 e INF129.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: CATÁLOGO DE RAMOS */}
+            {activeTab === 'catalog' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900">Catálogo Oficial USM</h2>
+                    <p className="text-xs text-slate-500">Selecciona asignaturas con pautas de evaluación precargadas.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {OFFICIAL_CATALOG.map(preset => (
+                    <div key={preset.code} className="bg-white rounded-3xl p-6 border border-[#EAECE6] shadow-xs flex flex-col justify-between space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="px-3 py-1 rounded-full text-xs font-black bg-[#EAECE6] text-slate-800 font-mono">
+                            {preset.code}
+                          </span>
+                          <span className="text-xs font-bold text-slate-400">{preset.credits} SCT</span>
+                        </div>
+                        <h3 className="font-black text-lg text-slate-900">{preset.fullName}</h3>
+                        <p className="text-xs text-slate-500 mt-1 mb-3">{preset.description}</p>
+                      </div>
+
+                      <button
+                        onClick={() => handleAddCourseToSemester(activeSemesterId, preset)}
+                        className="w-full py-2.5 bg-rumbo-dark hover:bg-rumbo-darkHover text-white font-extrabold text-xs rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2"
+                      >
+                        <i className="fa-solid fa-plus"></i>
+                        <span>Añadir a {currentSemester?.name}</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: BIBLIOTECA DE SEMESTRES 100% INTERACTIVA */}
+            {activeTab === 'library' && (
+              <div className="space-y-6">
+                
+                {/* CABECERA CON BOTÓN + CREAR NUEVO SEMESTRE */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900">Biblioteca de Semestres</h2>
+                    <p className="text-xs text-slate-500">Administra tus semestres cursados, asignaturas y calcula tu PPA acumulado.</p>
+                  </div>
+
+                  <button
+                    onClick={() => setShowAddSemesterModal(true)}
+                    className="px-4 py-2.5 bg-rumbo-dark hover:bg-rumbo-darkHover text-white font-extrabold text-xs rounded-2xl shadow-xs transition-all flex items-center gap-2 self-start"
+                  >
+                    <i className="fa-solid fa-plus"></i>
+                    <span>+ Crear Nuevo Semestre</span>
+                  </button>
+                </div>
+
+                {/* TARJETA RESUMEN PPA GLOBAL */}
+                <div className="rumbo-card-hero text-white rounded-3xl p-6 shadow-md flex justify-between items-center">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase text-emerald-200">PPA Acumulado Global</span>
+                    <div className="text-4xl font-black mt-1">{globalPPA.toFixed(2)}</div>
+                  </div>
+                  <div className="text-xs text-emerald-100 font-bold">
+                    {semesters.length} semestres creados
+                  </div>
+                </div>
+
+                {/* TARJETAS INTERACTIVAS DE CADA SEMESTRE */}
+                <div className="grid grid-cols-1 gap-6">
+                  {semesters.map(sem => {
+                    // Cálculo PPA de este semestre específico
+                    let semCreds = 0, semSum = 0;
+                    sem.courses.forEach(c => {
+                      const res = calculateCourse(c);
+                      const cr = parseInt(c.credits) || 1;
+                      semCreds += cr;
+                      semSum += res.finalGrade * cr;
+                    });
+                    const thisSemPPA = semCreds > 0 ? (semSum / semCreds) : 0;
+
+                    return (
+                      <div key={sem.id} className="bg-white rounded-3xl p-6 border border-[#EAECE6] shadow-xs space-y-4">
+                        
+                        {/* CABECERA DEL SEMESTRE */}
+                        <div className="flex items-center justify-between border-b border-[#EAECE6] pb-4">
+                          <div>
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-black text-xl text-slate-900">{sem.fullName || sem.name}</h3>
+                              {sem.id === activeSemesterId && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-900">
+                                  Semestre Activo
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs font-bold text-slate-400">PPA Semestral: {thisSemPPA.toFixed(2)}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* BOTÓN + AÑADIR RAMO A ESTE SEMESTRE */}
+                            <button
+                              onClick={() => setShowAddCourseToSemModal(sem.id)}
+                              className="px-3 py-1.5 bg-rumbo-dark text-white font-extrabold text-xs rounded-xl hover:bg-rumbo-darkHover transition-colors flex items-center gap-1.5"
+                            >
+                              <i className="fa-solid fa-plus text-xs"></i>
+                              <span>Añadir Ramo</span>
+                            </button>
+
+                            {/* BOTÓN BORRAR SEMESTRE */}
+                            <button
+                              onClick={() => handleDeleteSemester(sem.id)}
+                              className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                              title="Eliminar Semestre"
+                            >
+                              <i className="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* LISTADO DE RAMOS CON OPCIÓN DE ELIMINAR CADA RAMO */}
+                        <div className="space-y-2">
+                          {sem.courses.length === 0 ? (
+                            <div className="text-center py-4 text-xs text-slate-400">
+                              No hay asignaturas en este semestre. ¡Añade una!
+                            </div>
+                          ) : (
+                            sem.courses.map(course => {
+                              const res = calculateCourse(course);
+                              return (
+                                <div 
+                                  key={course.id} 
+                                  className="p-3 rounded-2xl border border-[#EAECE6] bg-[#FAFBF6] flex items-center justify-between gap-3"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div 
+                                      className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs"
+                                      style={{ backgroundColor: course.pastelBg, color: course.pastelText }}
+                                    >
+                                      <i className={`fa-solid ${course.icon || 'fa-book'}`}></i>
+                                    </div>
+                                    <div>
+                                      <h4 className="font-extrabold text-xs text-slate-900">{course.name} ({course.code})</h4>
+                                      <span className="text-[10px] text-slate-400">{course.credits} SCT</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-4">
+                                    <span className="font-black text-xs text-slate-900">
+                                      {res.finalGrade.toFixed(1)}
+                                    </span>
+
+                                    {/* BOTÓN BORRAR RAMO ESPECÍFICO (🗑️) */}
+                                    <button
+                                      onClick={() => handleDeleteCourseFromSemester(sem.id, course.id)}
+                                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                                      title="Quitar ramo de este semestre"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* MODAL: VER REGLAS Y PAUTA */}
+          {showRuleModal && activeCourse && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#EAECE6] space-y-5 max-h-[85vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-[#EAECE6] pb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-rumbo-dark tracking-wider">Reglamento Oficial USM</span>
+                    <h3 className="text-xl font-black text-slate-900 leading-tight">{activeCourse.fullName || activeCourse.name}</h3>
+                  </div>
+                  <button onClick={() => setShowRuleModal(false)} className="w-8 h-8 rounded-full bg-[#FAFBF6] hover:bg-[#EAECE6] text-slate-500 font-bold text-sm">✕</button>
+                </div>
+
+                <div className="space-y-4 text-xs">
+                  <div className="bg-[#FAFBF6] p-4 rounded-2xl border border-[#EAECE6]">
+                    <span className="font-black text-slate-400 uppercase text-[9px] block mb-1">Fórmula de Cálculo</span>
+                    <code className="font-mono font-extrabold text-sm text-rumbo-dark block">{activeCourse.rules?.formula}</code>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="font-extrabold text-slate-900 block text-xs">Detalles de la Pauta:</span>
+                    <ul className="space-y-2 text-slate-600">
+                      {activeCourse.rules?.details?.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <i className="fa-solid fa-circle-check text-rumbo-dark mt-0.5 flex-shrink-0"></i>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[#EAECE6]">
+                  <button onClick={() => setShowRuleModal(false)} className="w-full py-3 bg-rumbo-dark text-white font-extrabold text-xs rounded-2xl shadow-md">
+                    Entendido
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: CREAR NUEVO SEMESTRE */}
+          {showAddSemesterModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#EAECE6] space-y-4">
+                <h3 className="font-black text-base text-slate-900">Crear Nuevo Semestre</h3>
+                <form onSubmit={handleCreateSemester} className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-bold block mb-1">Identificador del Semestre</label>
+                    <input
+                      type="text" required placeholder="Ej: 2027 · 1°"
+                      value={newSemName} onChange={e => setNewSemName(e.target.value)}
+                      className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowAddSemesterModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
+                    <button type="submit" className="px-4 py-2 bg-rumbo-dark text-white font-extrabold rounded-xl">Crear Semestre</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: SELECCIONAR RAMO PARA UN SEMESTRE */}
+          {showAddCourseToSemModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#EAECE6] space-y-4 max-h-[85vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-[#EAECE6] pb-3">
+                  <h3 className="font-black text-base text-slate-900">Añadir Ramo a Semestre</h3>
+                  <button onClick={() => setShowAddCourseToSemModal(null)} className="text-slate-400 font-bold">✕</button>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-slate-500 block">Elegir del catálogo preconfigurado:</span>
+                  {OFFICIAL_CATALOG.map(preset => (
+                    <button
+                      key={preset.code}
+                      onClick={() => handleAddCourseToSemester(showAddCourseToSemModal, preset)}
+                      className="w-full p-3 rounded-2xl border border-[#EAECE6] hover:bg-[#FAFBF6] text-left transition-all flex items-center justify-between"
+                    >
+                      <div>
+                        <h4 className="font-extrabold text-xs text-slate-900">{preset.fullName} ({preset.code})</h4>
+                        <span className="text-[10px] text-slate-400">{preset.credits} SCT</span>
+                      </div>
+                      <i className="fa-solid fa-plus text-rumbo-dark text-xs"></i>
+                    </button>
+                  ))}
+
+                  <div className="pt-2 border-t border-[#EAECE6]">
+                    <button
+                      onClick={() => setShowCustomCourseModal(true)}
+                      className="w-full py-2.5 bg-slate-800 text-white font-extrabold text-xs rounded-xl hover:bg-slate-900 transition-colors"
+                    >
+                      + Crear Ramo Personalizado
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: REGISTRAR ASIGNATURA PERSONALIZADA */}
+          {showCustomCourseModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#EAECE6] space-y-4">
+                <h3 className="font-black text-base text-slate-900">Crear Asignatura Personalizada</h3>
+                <form onSubmit={handleCreateCustomCourse} className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-bold block mb-1">Nombre del Ramo</label>
+                    <input
+                      type="text" required placeholder="Ej: Ecuaciones Diferenciales"
+                      value={customName} onChange={e => setCustomName(e.target.value)}
+                      className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="font-bold block mb-1">Sigla</label>
+                      <input
+                        type="text" placeholder="MAT071" value={customCode} onChange={e => setCustomCode(e.target.value)}
+                        className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold block mb-1">Créditos SCT</label>
+                      <input
+                        type="number" min="1" max="20" value={customCredits} onChange={e => setCustomCredits(e.target.value)}
+                        className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowCustomCourseModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
+                    <button type="submit" className="px-4 py-2 bg-rumbo-dark text-white font-extrabold rounded-xl">Crear Asignatura</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: REGISTRAR FECHA EN CALENDARIO */}
+          {showAddEventModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#EAECE6] space-y-4">
+                <h3 className="font-black text-base text-slate-900">Añadir Fecha / Evento</h3>
+                <form onSubmit={handleAddEvent} className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-bold block mb-1">Título</label>
+                    <input
+                      type="text" required placeholder="Ej: Entrega Tarea 2"
+                      value={eventTitle} onChange={e => setEventTitle(e.target.value)}
+                      className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="font-bold block mb-1">Fecha</label>
+                      <input
+                        type="date" required value={eventDate} onChange={e => setEventDate(e.target.value)}
+                        className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold block mb-1">Sigla Ramo</label>
+                      <input
+                        type="text" placeholder="MAT070" value={eventCode} onChange={e => setEventCode(e.target.value)}
+                        className="w-full bg-[#FAFBF6] border border-[#EAECE6] rounded-xl px-3 py-2 font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowAddEventModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
+                    <button type="submit" className="px-4 py-2 bg-rumbo-dark text-white font-extrabold rounded-xl">Guardar Fecha</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
