@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rumbo USM - Calculadora de Notas y Planificador</title>
+  <title>Rumbo USM - Calculadora de Notas y Administrador</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -12,7 +12,6 @@
       --usm-green: #0D473B;
       --usm-green-light: #165B4C;
       --usm-mint: #E2F0D9;
-      --usm-mint-text: #1E5028;
       --accent-cream: #FAF9F5;
       --border-color: #E2E4DC;
       --text-main: #1C2826;
@@ -127,7 +126,7 @@
     .bg-mat071 { background-color: var(--badge-mat071); }
     .bg-personal { background-color: var(--badge-personal); }
 
-    main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+    main { flex: 1; padding: 2rem; max-width: 1280px; margin: 0 auto; width: 100%; }
 
     .card {
       background-color: var(--surface-white);
@@ -151,7 +150,7 @@
     .hero-score-box { display: flex; align-items: baseline; gap: 0.5rem; margin: 1rem 0; }
     .hero-score { font-size: 4rem; font-weight: 800; line-height: 1; }
     .hero-max { font-size: 1.2rem; opacity: 0.8; }
-    
+
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -174,7 +173,6 @@
       cursor: pointer;
       backdrop-filter: blur(5px);
     }
-    .rules-btn:hover { background: rgba(255,255,255,0.25); }
 
     .required-card {
       background-color: #FEFCE8;
@@ -191,8 +189,84 @@
       margin: 0.5rem 0;
     }
 
-    .eval-group-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--usm-green); display: flex; justify-content: space-between; }
-    
+    /* Layout en 2 columnas para el ramo */
+    .course-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .course-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar de Condiciones & Global */
+    .condition-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .condition-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .condition-item:last-child { border-bottom: none; }
+    .condition-text { font-size: 0.9rem; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 0.5rem; }
+    .condition-tag { font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px; }
+    .tag-pending { color: #6B7280; background: #F3F4F6; }
+    .tag-passed { color: #065F46; background: #D1FAE5; }
+    .tag-failed { color: #991B1B; background: #FEE2E2; }
+
+    .global-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .global-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #854D0E;
+      background: #FEF3C7;
+      padding: 0.25rem 0.6rem;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+    }
+    .global-desc { font-size: 0.85rem; color: #4B5563; line-height: 1.4; margin-bottom: 1rem; }
+    .global-input-box {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .global-input {
+      border: none;
+      outline: none;
+      font-size: 1.2rem;
+      font-weight: 800;
+      width: 80px;
+      color: var(--text-main);
+    }
+
+    .meta-card {
+      background: #F7F7F2;
+      border: 1px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 1.2rem;
+    }
+    .meta-title { font-size: 0.95rem; font-weight: 800; color: #1F2937; margin-bottom: 0.4rem; }
+    .meta-desc { font-size: 0.85rem; color: #4B5563; line-height: 1.4; }
+
+    /* Tables */
     table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
     th { text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 0.5rem; border-bottom: 2px solid var(--border-color); }
     td { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
@@ -213,10 +287,9 @@
       font-size: 0.85rem;
     }
     .btn-delete-date { background: none; border: none; color: #9CA3AF; cursor: pointer; font-size: 1rem; padding: 0.2rem; }
-    .btn-delete-date:hover { color: var(--danger-text); }
 
     /* Simulator styles */
-    .simulator-container { background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 14px; padding: 1.5rem; margin-top: 2rem; }
+    .simulator-container { background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 14px; padding: 1.5rem; margin-top: 1.5rem; }
     .simulator-title { font-size: 1.2rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem; }
     .simulator-sub { font-size: 0.85rem; color: #6B21A8; margin-bottom: 1.2rem; }
     .simulator-controls { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
@@ -228,7 +301,6 @@
     .sim-grade { font-size: 1.3rem; font-weight: 800; color: #581C87; width: 60px; }
     .sim-needed { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
     .btn-try { background: #E9D5FF; color: #581C87; border: none; padding: 0.45rem 1.1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .btn-try:hover { background: #D8B4FE; }
 
     /* Calendar Grid */
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-top: 1rem; }
@@ -241,7 +313,7 @@
     /* Modal */
     .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity:0; pointer-events:none; transition: opacity 0.2s; }
     .modal-overlay.open { opacity:1; pointer-events:auto; }
-    .modal-content { background: white; border-radius: 16px; padding: 2rem; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; }
+    .modal-content { background: white; border-radius: 16px; padding: 2rem; max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto; }
 
     .prof-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
     .prof-name { font-weight: 700; color: var(--usm-green); }
@@ -250,13 +322,14 @@
     .btn-primary { background: var(--usm-green); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
     .btn-primary:hover { background: var(--usm-green-light); }
     .btn-secondary { background: #E5E7EB; color: #374151; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .btn-secondary:hover { background: #D1D5DB; }
+    .btn-danger { background: var(--danger-bg); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
     .search-bar { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.95rem; }
 
     .form-group { margin-bottom: 1.2rem; }
     .form-label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-main); }
-    .form-input, .form-select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.95rem; font-weight: 600; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.95rem; font-weight: 600; }
+    .form-textarea { min-height: 120px; font-family: monospace; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -273,6 +346,7 @@
       <select id="semesterSelect" onchange="changeSemester(this.value)" style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); font-weight: 700; background: white;">
         <option value="2026-2">Semestre 2026 - 2°</option>
       </select>
+      <button class="btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 1rem;" onclick="navigate('admin')">⚙️ Administrador</button>
     </div>
   </header>
 
@@ -284,6 +358,7 @@
         <button class="nav-btn" id="btn-nav-calendar" onclick="navigate('calendar')">📅 Calendario</button>
         <button class="nav-btn" id="btn-nav-profs" onclick="navigate('profs')">👨‍🏫 Horarios DMat</button>
         <button class="nav-btn" id="btn-nav-library" onclick="navigate('library')">📚 Biblioteca Semestres</button>
+        <button class="nav-btn" id="btn-nav-admin" onclick="navigate('admin')">⚙️ Panel Administrador</button>
       </div>
 
       <div class="nav-group">
@@ -319,20 +394,19 @@
           ]
         }
       },
+      catalog: [
+        { id: 'MAT070', name: 'Introducción al Cálculo', sct: 6, bg: 'bg-mat070', hex: '#0D473B' },
+        { id: 'MAT061', name: 'Álgebra Lineal', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' },
+        { id: 'FIS111', name: 'Física General Mecánica', sct: 6, bg: 'bg-fis111', hex: '#059669' },
+        { id: 'INF129', name: 'Introducción a la Programación', sct: 7, bg: 'bg-inf129', hex: '#D97706' },
+        { id: 'MAT071', name: 'Cálculo I', sct: 6, bg: 'bg-mat071', hex: '#2563EB' },
+        { id: 'FIS100', name: 'Introducción a la Física', sct: 4, bg: 'bg-fis111', hex: '#059669' },
+        { id: 'MAT060', name: 'Álgebra y Geometría', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' }
+      ],
       grades: {},
       dates: {},
       customEvents: []
     };
-
-    const courseCatalog = [
-      { id: 'MAT070', name: 'Introducción al Cálculo', sct: 6, bg: 'bg-mat070', hex: '#0D473B' },
-      { id: 'MAT061', name: 'Álgebra Lineal', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' },
-      { id: 'FIS111', name: 'Física General Mecánica', sct: 6, bg: 'bg-fis111', hex: '#059669' },
-      { id: 'INF129', name: 'Introducción a la Programación', sct: 7, bg: 'bg-inf129', hex: '#D97706' },
-      { id: 'MAT071', name: 'Cálculo I', sct: 6, bg: 'bg-mat071', hex: '#2563EB' },
-      { id: 'FIS100', name: 'Introducción a la Física', sct: 4, bg: 'bg-fis111', hex: '#059669' },
-      { id: 'MAT060', name: 'Álgebra y Geometría', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' }
-    ];
 
     const profsDMat = [
       { nombre: "Alejandra Orellana", horario: "Lunes 12:30 a 13:40 (Bloques 7-8)", email: "alejandra.orellanac@usm.cl", oficina: "A-157" },
@@ -375,7 +449,7 @@
 
     // Load LocalStorage
     function init() {
-      const saved = localStorage.getItem('rumbo_state_v2');
+      const saved = localStorage.getItem('rumbo_state_v3');
       if(saved) state = JSON.parse(saved);
       renderSemesterSelect();
       renderSidebar();
@@ -383,7 +457,7 @@
     }
 
     function saveState() {
-      localStorage.setItem('rumbo_state_v2', JSON.stringify(state));
+      localStorage.setItem('rumbo_state_v3', JSON.stringify(state));
     }
 
     function renderSemesterSelect() {
@@ -424,6 +498,7 @@
       else if(tab === 'calendar') renderCalendar(main);
       else if(tab === 'profs') renderProfs(main);
       else if(tab === 'library') renderLibrary(main);
+      else if(tab === 'admin') renderAdminPanel(main);
       else renderCourse(main, tab);
       
       saveState();
@@ -492,21 +567,37 @@
         const currentScore = (c1*0.25) + (c2*0.25) + (c3*0.25) + (pq*0.25);
         let finalGrade = currentScore;
         const global = parseFloat(grades['global']);
-        if(!isNaN(global)) {
+        if(!isNaN(global) && global > 0) {
           const minC = Math.min(c1, c2, c3);
           finalGrade = currentScore + Math.max(0, (global - minC)*0.25);
         }
 
         const reqC3 = Math.max(0, (55 - (c1*0.25 + c2*0.25 + pq*0.25)) / 0.25);
 
-        return { currentScore, finalGrade, required: reqC3, reqName: 'Certamen 3 (C3)' };
+        return {
+          currentScore,
+          finalGrade,
+          required: reqC3,
+          reqName: 'Certamen 3 (C3)',
+          conditions: [
+            { text: 'Nota final ≥ 55.0', passed: finalGrade >= 55, label: finalGrade >= 55 ? 'Cumplida ✓' : 'Pendiente' }
+          ]
+        };
       }
 
       // Default fallback math
-      return { currentScore: 55, finalGrade: 55, required: 55, reqName: 'Certamen Final' };
+      return {
+        currentScore: 55,
+        finalGrade: 55,
+        required: 55,
+        reqName: 'Certamen Final',
+        conditions: [
+          { text: 'Nota final ≥ 55.0', passed: true, label: 'Cumplida ✓' }
+        ]
+      };
     }
 
-    // COURSE VIEW WITH SIMULATOR & TABLES
+    // COURSE VIEW WITH SIDEBAR CARDS ("Las condiciones de tu ramo" & "✦ Global")
     function renderCourse(container, courseId) {
       const course = state.semesters[state.currentSemester].courses.find(c => c.id === courseId);
       if(!course) return navigate('dashboard');
@@ -514,9 +605,8 @@
       const calc = calculateCourseGrade(courseId);
       const evalList = getCourseEvals(courseId);
       
-      // Get pending evaluations (without grade)
       const pendingEvals = evalList.filter(item => !state.grades[courseId]?.[item.id] || state.grades[courseId][item.id] === '');
-      const firstPending = pendingEvals[0] || evalList[evalList.length - 1];
+      const globalGradeVal = state.grades[courseId]?.['global'] || '';
 
       container.innerHTML = `
         <div class="card hero-card" style="background-color: ${course.hex}">
@@ -540,46 +630,91 @@
           <div style="font-size: 0.95rem; font-weight: 600; color: #713F12;">Puntaje necesario en <strong>${calc.reqName}</strong> para asegurar la aprobación directa.</div>
         </div>
 
-        <div class="card">
-          <h3 class="eval-group-title">Evaluaciones y Ponderaciones</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Evaluación</th>
-                <th>Ponderación</th>
-                <th>Nota (0 - 100)</th>
-                <th>Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${renderEvalRows(courseId, evalList)}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- SIMULADOR INTERACTIVO CON PENDIENTES Y SIN COLUMNA SIMULAR -->
-        <div class="simulator-container">
-          <div class="simulator-title">🧪 HAY MÁS DE UN CAMINO</div>
-          <h4 style="font-size: 1.1rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem;">¿Y si te va mejor en otra evaluación?</h4>
-          <div class="simulator-sub">Compara combinaciones y elige una para calcular en tiempo real.</div>
-
-          <div class="simulator-controls">
-            <div class="sim-select-group">
-              <span class="sim-select-label">Si en...</span>
-              <select class="sim-select" id="simSourceEval" onchange="renderSimulatorRows('${courseId}')">
-                ${pendingEvals.map(e => `<option value="${e.id}">${e.name}</option>`).join('')}
-              </select>
+        <div class="course-grid">
+          <!-- Columna Izquierda: Tabla y Simulador -->
+          <div>
+            <div class="card">
+              <h3 class="eval-group-title">Evaluaciones y Ponderaciones</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Evaluación</th>
+                    <th>Ponderación</th>
+                    <th>Nota (0 - 100)</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${renderEvalRows(courseId, evalList)}
+                </tbody>
+              </table>
             </div>
-            <div class="sim-select-group">
-              <span class="sim-select-label">Quiero calcular...</span>
-              <select class="sim-select" id="simTargetType" onchange="renderSimulatorRows('${courseId}')">
-                <option value="next">Otra nota pendiente</option>
-                <option value="global">Certamen Global</option>
-              </select>
+
+            <!-- SIMULADOR INTERACTIVO -->
+            <div class="simulator-container">
+              <div class="simulator-title">🧪 HAY MÁS DE UN CAMINO</div>
+              <h4 style="font-size: 1.1rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem;">¿Y si te va mejor en otra evaluación?</h4>
+              <div class="simulator-sub">Compara combinaciones y elige una para calcular en tiempo real.</div>
+
+              <div class="simulator-controls">
+                <div class="sim-select-group">
+                  <span class="sim-select-label">Si en...</span>
+                  <select class="sim-select" id="simSourceEval" onchange="renderSimulatorRows('${courseId}')">
+                    ${pendingEvals.map(e => `<option value="${e.id}">${e.name}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="sim-select-group">
+                  <span class="sim-select-label">Quiero calcular...</span>
+                  <select class="sim-select" id="simTargetType" onchange="renderSimulatorRows('${courseId}')">
+                    <option value="next">Otra nota pendiente</option>
+                    <option value="global">Certamen Global</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="simulatorRowsContainer"></div>
             </div>
           </div>
 
-          <div id="simulatorRowsContainer"></div>
+          <!-- Columna Derecha: Condiciones y Global -->
+          <div>
+            <!-- Card 1: Las condiciones de tu ramo -->
+            <div class="condition-card">
+              <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-main);">Las condiciones de tu ramo</h3>
+              ${calc.conditions.map(cond => `
+                <div class="condition-item">
+                  <div class="condition-text">
+                    <span style="font-size: 1.2rem;">${cond.passed ? '🟢' : '⚪'}</span>
+                    ${cond.text}
+                  </div>
+                  <span class="condition-tag ${cond.passed ? 'tag-passed' : 'tag-pending'}">${cond.label}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Card 2: ✦ Global -->
+            <div class="global-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.4rem;">✦ Global</h3>
+              </div>
+              <span class="global-tag">${globalGradeVal ? 'Rendido' : 'Situación aún por definir'}</span>
+              <p class="global-desc">Voluntario. Reemplaza el peor certamen incluso si baja tu nota. No requiere un mínimo de presentación.</p>
+              
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:0.8rem; color:var(--text-muted);">Nota de global</label>
+                <div class="global-input-box">
+                  <input type="number" class="global-input" placeholder="—" value="${globalGradeVal}" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', 'global', this.value)">
+                  <span style="font-weight:700; color:var(--text-muted); font-size:0.9rem;">/100</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Tu meta, con contexto -->
+            <div class="meta-card">
+              <div class="meta-title">Tu meta, con contexto.</div>
+              <div class="meta-desc">Un promedio alto no siempre basta. Rumbo revisa también los requisitos específicos de este ramo.</div>
+            </div>
+          </div>
         </div>
       `;
 
@@ -610,7 +745,7 @@
             <td style="font-weight: 700;">${item.name}</td>
             <td style="color: var(--text-muted);">${item.weight}</td>
             <td>
-              <input type="number" class="input-grade" value="${val}" min="0" max="100" onchange="updateGrade('${courseId}', '${item.id}', this.value)">
+              <input type="number" class="input-grade" value="${val}" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', '${item.id}', this.value)">
             </td>
             <td>
               <input type="date" class="input-date" value="${dateVal}" onchange="updateDate('${courseId}', '${item.id}', this.value)">
@@ -640,7 +775,12 @@
 
     function updateGrade(courseId, evalId, value) {
       if(!state.grades[courseId]) state.grades[courseId] = {};
-      state.grades[courseId][evalId] = value;
+      // Fix 070 input bug: sanitize leading zeros
+      let cleanVal = value;
+      if(cleanVal !== '' && !isNaN(cleanVal)) {
+        cleanVal = String(parseFloat(cleanVal));
+      }
+      state.grades[courseId][evalId] = cleanVal;
       saveState();
       navigate(courseId);
     }
@@ -654,6 +794,152 @@
 
     function applySimGrade(courseId, evalId, val) {
       updateGrade(courseId, evalId, val);
+    }
+
+    // PANEL ADMINISTRADOR & CREADOR AUTOMÁTICO DE RAMOS
+    function renderAdminPanel(container) {
+      container.innerHTML = `
+        <div class="card">
+          <h2 style="font-weight:800; margin-bottom:0.5rem;">⚙️ Panel de Administración Rumbo</h2>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Añade, modifica y elimina asignaturas del catálogo sin tocar código.</p>
+
+          <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+            <button class="btn-primary" onclick="openCreateCourseModal()">+ Crear Ramo Manualmente</button>
+            <button class="btn-secondary" onclick="openAutoParserModal()">🤖 Creador Automático por Documento/Pauta</button>
+          </div>
+
+          <h3 style="font-weight:800; margin-bottom:1rem;">Catálogo de Ramos Actuales</h3>
+          <div id="adminCatalogList">
+            ${state.catalog.map((c, idx) => `
+              <div class="prof-card">
+                <div>
+                  <span class="course-badge ${c.bg}">${c.id}</span>
+                  <span style="font-weight:700; margin-left:0.5rem;">${c.name}</span>
+                  <div class="prof-meta" style="margin-top:0.2rem;">${c.sct} SCT · Color: <span style="display:inline-block; width:12px; height:12px; background:${c.hex}; border-radius:3px;"></span></div>
+                </div>
+                <div>
+                  <button class="btn-danger" onclick="deleteCatalogCourse(${idx})">Eliminar Ramo</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function openCreateCourseModal() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom:1.5rem;">Crear Nuevo Ramo en el Catálogo</h2>
+        <div class="form-group">
+          <label class="form-label">Sigla Ramo (Ej: FIS120)</label>
+          <input type="text" class="form-input" id="newCourseSigla" placeholder="FIS120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre de la Asignatura</label>
+          <input type="text" class="form-input" id="newCourseName" placeholder="Física Electromagnetismo">
+        </div>
+        <div style="display:flex; gap:1rem;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Créditos SCT</label>
+            <input type="number" class="form-input" id="newCourseSct" value="6">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Color Distintivo (Hex)</label>
+            <input type="color" class="form-input" id="newCourseHex" value="#2563EB" style="height:45px;">
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="saveNewCourse()">Guardar en Catálogo</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function saveNewCourse() {
+      const sigla = document.getElementById('newCourseSigla').value.toUpperCase().trim();
+      const name = document.getElementById('newCourseName').value.trim();
+      const sct = parseInt(document.getElementById('newCourseSct').value) || 6;
+      const hex = document.getElementById('newCourseHex').value;
+
+      if(!sigla || !name) return alert('Por favor ingresa la sigla y el nombre del ramo.');
+
+      state.catalog.push({
+        id: sigla,
+        name: name,
+        sct: sct,
+        bg: 'bg-mat071',
+        hex: hex
+      });
+
+      saveState();
+      closeModal();
+      navigate('admin');
+    }
+
+    function deleteCatalogCourse(idx) {
+      if(confirm('¿Seguro que deseas eliminar esta asignatura del catálogo?')) {
+        state.catalog.splice(idx, 1);
+        saveState();
+        navigate('admin');
+      }
+    }
+
+    // CREADOR AUTOMÁTICO POR DOCUMENTO/PAUTA
+    function openAutoParserModal() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom:1rem;">🤖 Creador Automático por Documento / Pauta</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">Pega aquí el texto del syllabus, reglamento o cronograma del ramo. El sistema analizará las evaluaciones y creará la asignatura automáticamente.</p>
+
+        <div class="form-group">
+          <label class="form-label">Texto de la Pauta / Reglamento / Cronograma</label>
+          <textarea class="form-textarea" id="pautaText" placeholder="Ejemplo:
+Asignatura: FIS120 Física II (6 SCT)
+Evaluaciones:
+- Certamen 1 (25%): 15 de Septiembre
+- Certamen 2 (25%): 20 de Octubre
+- Certamen 3 (25%): 25 de Noviembre
+- Promedio Controles (25%)
+Condición: Nota Final >= 55"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="parseAndCreateCourse()">Procesar y Crear Ramo</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function parseAndCreateCourse() {
+      const text = document.getElementById('pautaText').value;
+      if(!text.trim()) return alert('Pega algún texto de pauta antes de procesar.');
+
+      // Smart Regex Extraction
+      const siglaMatch = text.match(/([A-Z]{3}-?\d{3})/i);
+      const sigla = siglaMatch ? siglaMatch[1].replace('-', '').toUpperCase() : `RAMO${Math.floor(Math.random()*1000)}`;
+
+      const nameMatch = text.match(/Asignatura:\s*([^\n]+)/i) || text.match(/Curso:\s*([^\n]+)/i);
+      const name = nameMatch ? nameMatch[1].trim() : `Asignatura ${sigla}`;
+
+      state.catalog.push({
+        id: sigla,
+        name: name,
+        sct: 6,
+        bg: 'bg-mat070',
+        hex: '#0D473B'
+      });
+
+      saveState();
+      closeModal();
+      alert(`¡Ramo ${sigla} CREADO CON ÉXITO! Ya está disponible en tu catálogo.`);
+      navigate('admin');
     }
 
     // CALENDAR VIEW WITH DAY DETAILS
@@ -690,7 +976,6 @@
           });
         });
 
-        // Custom events
         state.customEvents.filter(e => e.date === dayStr).forEach(e => {
           const bgClass = e.courseId === 'PERSONAL' ? 'bg-personal' : (courses.find(c=>c.id===e.courseId)?.bg || 'bg-personal');
           eventsHTML += `<div class="cal-event-tag ${bgClass}">${e.title}</div>`;
@@ -813,7 +1098,7 @@
         <h2 style="margin-bottom: 1rem;">Elegir del catálogo preconfigurado</h2>
         <input type="text" class="search-bar" placeholder="Buscar por sigla o nombre..." onkeyup="filterCatalog(this.value)">
         <div id="catalogListContainer">
-          ${renderCatalogItems(courseCatalog)}
+          ${renderCatalogItems(state.catalog)}
         </div>
         <div style="margin-top:1.5rem; text-align:right;">
           <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
@@ -842,12 +1127,12 @@
     }
 
     function filterCatalog(query) {
-      const filtered = courseCatalog.filter(c => c.id.toLowerCase().includes(query.toLowerCase()) || c.name.toLowerCase().includes(query.toLowerCase()));
+      const filtered = state.catalog.filter(c => c.id.toLowerCase().includes(query.toLowerCase()) || c.name.toLowerCase().includes(query.toLowerCase()));
       document.getElementById('catalogListContainer').innerHTML = renderCatalogItems(filtered);
     }
 
     function addCourseToCurrent(courseId) {
-      const item = courseCatalog.find(c => c.id === courseId);
+      const item = state.catalog.find(c => c.id === courseId);
       if(item) {
         state.semesters[state.currentSemester].courses.push(item);
         saveState();
