@@ -1,1880 +1,1335 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rumbo USM - Tus notas, tu próximo paso...</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            rumbo: {
-              bg: '#F6F7F2',
-              card: '#FFFFFF',
-              border: '#E2E4DC',
-              dark: '#0D473B',
-              darkHover: '#09362C',
-              emerald: '#114B3E',
-              mint: '#10B981',
-              accent: '#2D6A4F',
-              cream: '#FAF9F5',
-              gold: '#D97706',
-              personal: '#111827'
-            }
-          },
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace']
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <!-- FontAwesome 6 Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- React & ReactDOM Standalone -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-
-  <!-- Babel Compiler -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Canvas Confetti -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
+  <title>Rumbo USM - Calculadora y Planificador Sansano</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-      background-color: #F6F7F2;
-      color: #1C2826;
+    :root {
+      --bg-main: #F6F7F2;
+      --surface-white: #FFFFFF;
+      --usm-green: #0D473B;
+      --usm-green-light: #165B4C;
+      --usm-mint: #E2F0D9;
+      --accent-cream: #FAF9F5;
+      --border-color: #E2E4DC;
+      --text-main: #1C2826;
+      --text-muted: #66706E;
+      --danger-bg: #FDE8E8;
+      --danger-text: #9B1C1C;
+      --badge-mat070: #0D473B;
+      --badge-mat061: #6B46C1;
+      --badge-fis111: #059669;
+      --badge-inf129: #D97706;
+      --badge-mat071: #2563EB;
+      --badge-personal: #111827;
     }
-    .rumbo-hero-gradient {
-      background-color: #0D473B;
-      background-image: radial-gradient(circle at 92% 12%, rgba(16, 185, 129, 0.22) 0%, transparent 60%);
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background-color: var(--surface-white);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      text-decoration: none;
     }
-    ::-webkit-scrollbar-track {
+    .brand-logo {
+      background-color: var(--usm-green);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+    .brand-title { font-size: 1.4rem; font-weight: 800; color: var(--usm-green); letter-spacing: -0.5px; }
+    .brand-title span { color: #10B981; }
+    .brand-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+
+    .layout { display: flex; flex: 1; }
+
+    sidebar {
+      width: 280px;
+      background-color: var(--surface-white);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .nav-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: none;
       background: transparent;
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: all 0.2s;
     }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(13, 71, 59, 0.25);
-      border-radius: 9999px;
+    .nav-btn:hover { background-color: var(--accent-cream); color: var(--usm-green); }
+    .nav-btn.active { background-color: var(--usm-green); color: white; }
+
+    .course-nav-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.85rem;
+      font-weight: 600;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(13, 71, 59, 0.45);
+    .course-nav-item:hover { background-color: var(--accent-cream); }
+    .course-nav-item.active { background-color: #E6F0EC; color: var(--usm-green); }
+
+    .course-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 700;
+      color: white;
     }
+    .bg-mat070 { background-color: var(--badge-mat070); }
+    .bg-mat061 { background-color: var(--badge-mat061); }
+    .bg-fis111 { background-color: var(--badge-fis111); }
+    .bg-inf129 { background-color: var(--badge-inf129); }
+    .bg-mat071 { background-color: var(--badge-mat071); }
+    .bg-personal { background-color: var(--badge-personal); }
+
+    main { flex: 1; padding: 2rem; max-width: 1280px; margin: 0 auto; width: 100%; }
+
+    .card {
+      background-color: var(--surface-white);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .hero-card {
+      background-color: var(--usm-green);
+      color: white;
+      border: none;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .hero-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero-score-box { display: flex; align-items: baseline; gap: 0.5rem; margin: 1rem 0; }
+    .hero-score { font-size: 4rem; font-weight: 800; line-height: 1; }
+    .hero-max { font-size: 1.2rem; opacity: 0.8; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .status-approved { background-color: #D1FAE5; color: #065F46; }
+    .status-failed { background-color: #FEE2E2; color: #991B1B; }
+
+    .rules-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+    }
+
+    .required-card {
+      background-color: #FEFCE8;
+      border: 2px solid #FEF08A;
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .required-number {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: #854D0E;
+      line-height: 1;
+      margin: 0.5rem 0;
+    }
+
+    .course-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .course-grid { grid-template-columns: 1fr; }
+    }
+
+    .condition-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .condition-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .condition-item:last-child { border-bottom: none; }
+    .condition-text { font-size: 0.9rem; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 0.5rem; }
+    .condition-tag { font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px; }
+    .tag-pending { color: #6B7280; background: #F3F4F6; }
+    .tag-passed { color: #065F46; background: #D1FAE5; }
+
+    .global-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .global-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #854D0E;
+      background: #FEF3C7;
+      padding: 0.25rem 0.6rem;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+    }
+    .global-desc { font-size: 0.85rem; color: #4B5563; line-height: 1.4; margin-bottom: 1rem; }
+    .global-input-box {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .global-input {
+      border: none;
+      outline: none;
+      font-size: 1.2rem;
+      font-weight: 800;
+      width: 80px;
+      color: var(--text-main);
+    }
+
+    .meta-card {
+      background: #F7F7F2;
+      border: 1px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 1.2rem;
+    }
+    .meta-title { font-size: 0.95rem; font-weight: 800; color: #1F2937; margin-bottom: 0.4rem; }
+    .meta-desc { font-size: 0.85rem; color: #4B5563; line-height: 1.4; }
+
+    .eval-group-header {
+      background: #FAF9F5;
+      padding: 0.6rem 0.8rem;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--usm-green);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    th { text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 0.5rem; border-bottom: 2px solid var(--border-color); }
+    td { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    
+    .input-grade {
+      width: 80px;
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-weight: 700;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .input-date {
+      padding: 0.4rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .btn-delete-date { background: none; border: none; color: #9CA3AF; cursor: pointer; font-size: 1rem; padding: 0.2rem; }
+
+    .simulator-container { background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 14px; padding: 1.5rem; margin-top: 1.5rem; }
+    .simulator-title { font-size: 1.2rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem; }
+    .simulator-sub { font-size: 0.85rem; color: #6B21A8; margin-bottom: 1.2rem; }
+    .simulator-controls { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .sim-select-group { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 180px; }
+    .sim-select-label { font-size: 0.75rem; font-weight: 700; color: #6B21A8; text-transform: uppercase; }
+    .sim-select { padding: 0.6rem; border-radius: 8px; border: 1px solid #D8B4FE; background: white; font-weight: 600; font-size: 0.9rem; }
+    
+    .sim-row { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: white; border-radius: 10px; margin-bottom: 0.5rem; border: 1px solid #F3E8FF; }
+    .sim-grade { font-size: 1.3rem; font-weight: 800; color: #581C87; width: 60px; }
+    .sim-needed { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+    .btn-try { background: #E9D5FF; color: #581C87; border: none; padding: 0.45rem 1.1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-top: 1rem; }
+    .cal-day-header { text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); padding: 0.5rem; }
+    .cal-day-cell { background: white; border: 1px solid var(--border-color); min-height: 85px; border-radius: 10px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; }
+    .cal-day-cell:hover { border-color: var(--usm-green); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .cal-day-num { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.3rem; }
+    .cal-event-tag { font-size: 0.65rem; font-weight: 700; color: white; padding: 0.15rem 0.35rem; border-radius: 4px; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity:0; pointer-events:none; transition: opacity 0.2s; }
+    .modal-overlay.open { opacity:1; pointer-events:auto; }
+    .modal-content { background: white; border-radius: 16px; padding: 2rem; max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto; }
+
+    .prof-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+    .prof-name { font-weight: 700; color: var(--usm-green); }
+    .prof-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+    .btn-primary { background: var(--usm-green); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .btn-primary:hover { background: var(--usm-green-light); }
+    .btn-secondary { background: #E5E7EB; color: #374151; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .btn-danger { background: var(--danger-bg); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+    .search-bar { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+    .form-group { margin-bottom: 1.2rem; }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-main); }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.95rem; font-weight: 600; }
+    .form-textarea { min-height: 120px; font-family: monospace; font-size: 0.85rem; }
+
+    .file-drop-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      background: #FAF9F5;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    .file-drop-area:hover { border-color: var(--usm-green); background: #E6F0EC; }
   </style>
 </head>
-<body class="h-full bg-[#F6F7F2] text-slate-800 antialiased selection:bg-[#0D473B] selection:text-white">
-  <div id="root" class="h-full"></div>
+<body>
 
-  <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
+  <header>
+    <a class="brand" onclick="navigate('dashboard')">
+      <div class="brand-logo">R</div>
+      <div>
+        <div class="brand-title">rumbo<span>.</span></div>
+        <div class="brand-sub">USM · San Joaquín</div>
+      </div>
+    </a>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <select id="semesterSelect" onchange="changeSemester(this.value)" style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); font-weight: 700; background: white;">
+        <option value="2026-2">Semestre 2026 - 2°</option>
+      </select>
+      <button class="btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 1rem;" onclick="promptAdminPassword()">⚙️ Administrador</button>
+    </div>
+  </header>
 
-    const PASSING_GRADE = 55.0;
+  <div class="layout">
+    <sidebar>
+      <div class="nav-group">
+        <div class="nav-label">General</div>
+        <button class="nav-btn active" id="btn-nav-dashboard" onclick="navigate('dashboard')">📊 Mis Notas</button>
+        <button class="nav-btn" id="btn-nav-calendar" onclick="navigate('calendar')">📅 Calendario</button>
+        <button class="nav-btn" id="btn-nav-profs" onclick="navigate('profs')">👨‍🏫 Horarios DMat</button>
+        <button class="nav-btn" id="btn-nav-library" onclick="navigate('library')">📚 Biblioteca Semestres</button>
+      </div>
 
-    // DIRECTORIO OFICIAL DE PROFESORES DMAT (49 DOCENTES - SAN JOAQUÍN 2026-2)
-    const DMAT_PROFESSORS = [
-      { id: 1, name: 'Alejandra Orellana', email: 'alejandra.orellanac@usm.cl', office: 'A-157', hours: 'Lunes 12:30 a 13:40 (Bloques 7-8)' },
-      { id: 2, name: 'Alexis Fuentes', email: 'alexis.fuentesp@usm.cl', office: 'A-169', hours: 'Miércoles 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 3, name: 'Álvaro Macías', email: 'alvaro.macias@usm.cl', office: 'A-157', hours: 'Martes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 4, name: 'Angélica Torres', email: 'angelica.torresb@usm.cl', office: 'A-165', hours: 'Miércoles 14:40 a 15:50 (Bloques 9-10)' },
-      { id: 5, name: 'Benjamín Vera', email: 'benjamin.verav@usm.cl', office: 'A-157', hours: 'Jueves 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 6, name: 'Carlos Finat', email: 'carlos.finat@usm.cl', office: 'A-157', hours: 'Solicitar atención por correo' },
-      { id: 7, name: 'Claudio Henríquez', email: 'claudio.henriquezt@usm.cl', office: 'A-157', hours: 'Lunes 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 8, name: 'Cristian Hernández', email: 'cristian.hernandezpe@usm.cl', office: 'A-157', hours: 'Martes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 9, name: 'Daniel Vidal', email: 'daniel.vidalf@usm.cl', office: 'A-157', hours: 'Viernes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 10, name: 'Eduardo Hirsh', email: 'eduardo.hirsh@usm.cl', office: 'A-157', hours: 'Viernes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 11, name: 'Eduardo Zapata', email: 'eduardo.zapata@usm.cl', office: 'A-163', hours: 'Lunes y Miércoles 11:00 - 12:30' },
-      { id: 12, name: 'Enrique Otárola', email: 'enrique.otarola@usm.cl', office: 'A-148', hours: 'Martes 14:40 a 15:50 (Bloques 9-10)' },
-      { id: 13, name: 'Erwin Hernández', email: 'erwin.hernandez@usm.cl', office: 'F-551', hours: 'L-M-Mi-J 08:15 a 08:50 (Bloque 1)' },
-      { id: 14, name: 'Estefanía Bravo', email: 'estefania.bravo@usm.cl', office: 'A-163', hours: 'Martes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 15, name: 'Felipe Asbún', email: 'felipe.asbun@usm.cl', office: 'A-157', hours: 'Martes 16:05 a 17:15 (Bloques 11-12)' },
-      { id: 16, name: 'Felipe Rivera', email: 'felipe.riverame@usm.cl', office: 'A-157', hours: 'Martes 11:40 a 12:15 (Bloque 6)' },
-      { id: 17, name: 'Fernanda Cares', email: 'fernanda.cares@usm.cl', office: 'A-157', hours: 'Viernes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 18, name: 'Fernanda Torres', email: 'fernanda.torrest@usm.cl', office: 'A-157', hours: 'Viernes 14:40 a 15:50 (Bloques 9-10)' },
-      { id: 19, name: 'Gonzalo Contador', email: 'gonzalo.contador@usm.cl', office: 'A-159', hours: 'Solicitar por correo (practicasj.icmat@usm.cl)' },
-      { id: 20, name: 'Gredy Salmerón', email: 'gredy.salmeron@usm.cl', office: 'A-166', hours: 'Martes 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 21, name: 'Igsyl Domínguez', email: 'igsyl.dominguez@usm.cl', office: 'A-164', hours: 'Lunes 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 22, name: 'Isabel Flores', email: 'isabel.flores@usm.cl', office: 'A-150', hours: 'Lunes 12:30 a 13:05 (Bloque 7)' },
-      { id: 23, name: 'Isabel Martínez', email: 'isabel.martineza@usm.cl', office: 'A-157', hours: 'Martes 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 24, name: 'Johan Van Der Molen', email: 'johan.vandermolen@usm.cl', office: 'A-159', hours: 'Miércoles 17:00 a 18:00' },
-      { id: 25, name: 'José Rosales', email: 'jose.rosales.s@usach.cl', office: 'A-157', hours: 'Lunes 16:05 a 17:15 (Bloques 11-12)' },
-      { id: 26, name: 'José Yáñez', email: 'jose.yaneze@usm.cl', office: 'A-160', hours: 'Miércoles y Viernes 14:40 a 15:50' },
-      { id: 27, name: 'Juan Bahamondes', email: 'juan.bahamondes@usm.cl', office: 'A-152', hours: 'Martes y Jueves 14:40 a 15:50' },
-      { id: 28, name: 'Juan Muñoz', email: 'juan.munoz@usm.cl', office: 'A-152', hours: 'Viernes 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 29, name: 'Leonel Guerrero', email: 'leonel.guerrero@usm.cl', office: 'A-154', hours: 'Miércoles 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 30, name: 'Leonelo Iturriaga', email: 'leonelo.iturriaga@usm.cl', office: 'A-151', hours: 'Martes 16:05 a 17:15 (Bloque 11-12)' },
-      { id: 31, name: 'Luis Briceño', email: 'luis.briceno@usm.cl', office: 'A-147', hours: 'Martes y Jueves 14:40 a 15:50' },
-      { id: 32, name: 'Mª Alejandra Alvarado', email: 'alejandra.alvarado@usm.cl', office: 'A-177', hours: 'Martes y Jueves 09:30 - 11:00' },
-      { id: 33, name: 'Mª Gabriela López', email: 'gabriela.lopez@usm.cl', office: 'A-178', hours: 'Lunes y Jueves 11:00 - 12:30' },
-      { id: 34, name: 'Manuel Prado', email: 'manuel.prado@usm.cl', office: 'F-561', hours: 'Miércoles y Viernes 09:30 - 11:00' },
-      { id: 35, name: 'Matías Sasso', email: 'matias.sasso@usm.cl', office: 'A-179', hours: 'Martes y Viernes 14:00 - 15:30' },
-      { id: 36, name: 'Nelson Cifuentes', email: 'nelson.cifuentes@usm.cl', office: 'A-180', hours: 'Lunes y Miércoles 09:30 - 11:00' },
-      { id: 37, name: 'Néstor Jara', email: 'nestor.jara@usm.cl', office: 'F-562', hours: 'Martes y Jueves 15:30 - 17:00' },
-      { id: 38, name: 'Nicolás Abarzúa', email: 'nicolas.abarzua@usm.cl', office: 'A-181', hours: 'Lunes y Viernes 11:00 - 12:30' },
-      { id: 39, name: 'Nicolás Carreño', email: 'nicolas.carreno@usm.cl', office: 'A-182', hours: 'Miércoles y Viernes 14:00 - 15:30' },
-      { id: 40, name: 'Nicolás Hernández', email: 'nicolas.hernandez@usm.cl', office: 'F-563', hours: 'Lunes y Miércoles 15:30 - 17:00' },
-      { id: 41, name: 'Nicolás Varela', email: 'nicolas.varela@usm.cl', office: 'A-183', hours: 'Martes y Jueves 11:00 - 12:30' },
-      { id: 42, name: 'Nicolé Geyssel', email: 'nicole.geyssel@usm.cl', office: 'A-162', hours: 'Jueves 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 43, name: 'Pablo González', email: 'pablo.gonzalezl@usm.cl', office: 'A-157', hours: 'Viernes 08:15 a 09:25 (Bloques 1-2)' },
-      { id: 44, name: 'Patricio Quiroz', email: 'patricio.quiroz@usm.cl', office: 'A-075', hours: 'Martes 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 45, name: 'Roberto Ruggiero', email: 'roberto.ruggiero@usm.cl', office: 'A-157', hours: 'Jueves 09:40 a 10:50 (Bloques 3-4)' },
-      { id: 46, name: 'Rodrigo Lecaros', email: 'rodrigo.lecaros@usm.cl', office: 'A-063', hours: 'Lunes 09:40 a 12:15 (Bloques 3-6)' },
-      { id: 47, name: 'Sebastián Calzadillas', email: 'sebastian.calzadillas@usm.cl', office: 'A-187', hours: 'Miércoles y Viernes 15:30 - 17:00' },
-      { id: 48, name: 'Sergio López', email: 'sergio.lopezr@usm.cl', office: 'A-170', hours: 'Miércoles 11:05 a 12:15 (Bloques 5-6)' },
-      { id: 49, name: 'Victoria Fernández', email: 'victoria.fernandez@usm.cl', office: 'F-566', hours: 'Martes y Viernes 11:00 - 12:30' }
+      <div class="nav-group">
+        <div class="nav-label" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Mis Asignaturas</span>
+          <span style="cursor: pointer; color: var(--usm-green); font-size: 1.1rem;" onclick="openCatalogModal()">+</span>
+        </div>
+        <div id="sidebar-courses"></div>
+      </div>
+    </sidebar>
+
+    <main id="main-content"></main>
+  </div>
+
+  <!-- Modal Template -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalBody"></div>
+  </div>
+
+  <script>
+    // State Management
+    let state = {
+      activeTab: 'dashboard',
+      currentSemester: '2026-2',
+      semesters: {
+        '2026-2': {
+          name: '2026 - 2° Semestre',
+          courses: [
+            { id: 'MAT070', name: 'Introducción al Cálculo', sct: 6, bg: 'bg-mat070', hex: '#0D473B' },
+            { id: 'MAT061', name: 'Álgebra Lineal', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' },
+            { id: 'FIS111', name: 'Física General Mecánica', sct: 6, bg: 'bg-fis111', hex: '#059669' },
+            { id: 'INF129', name: 'Introducción a la Programación', sct: 7, bg: 'bg-inf129', hex: '#D97706' }
+          ]
+        }
+      },
+      catalog: [
+        { id: 'MAT070', name: 'Introducción al Cálculo', sct: 6, bg: 'bg-mat070', hex: '#0D473B' },
+        { id: 'MAT061', name: 'Álgebra Lineal', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' },
+        { id: 'FIS111', name: 'Física General Mecánica', sct: 6, bg: 'bg-fis111', hex: '#059669' },
+        { id: 'INF129', name: 'Introducción a la Programación', sct: 7, bg: 'bg-inf129', hex: '#D97706' },
+        { id: 'MAT071', name: 'Cálculo I', sct: 6, bg: 'bg-mat071', hex: '#2563EB' },
+        { id: 'FIS100', name: 'Introducción a la Física', sct: 4, bg: 'bg-fis111', hex: '#059669' },
+        { id: 'MAT060', name: 'Álgebra y Geometría', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' }
+      ],
+      grades: {},
+      dates: {},
+      customEvents: []
+    };
+
+    const profsDMat = [
+      { nombre: "Alejandra Orellana", horario: "Lunes 12:30 a 13:40 (Bloques 7-8)", email: "alejandra.orellanac@usm.cl", oficina: "A-157" },
+      { nombre: "Alexis Fuentes", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "alexis.fuentesp@usm.cl", oficina: "A-169" },
+      { nombre: "Álvaro Macías", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "alvaro.macias@usm.cl", oficina: "A-157" },
+      { nombre: "Angélica Torres", horario: "Miércoles 14:40 a 15:50 (Bloques 9-10)", email: "angelica.torresb@usm.cl", oficina: "A-165" },
+      { nombre: "Benjamín Vera", horario: "Jueves 11:05 a 12:15 (Bloques 5-6)", email: "benjamin.verav@usm.cl", oficina: "A-157" },
+      { nombre: "Carlos Finat", horario: "Solicitar atención por correo", email: "carlos.finat@usm.cl", oficina: "A-157" },
+      { nombre: "Claudio Henríquez", horario: "Lunes 11:05 a 12:15 (Bloques 5-6)", email: "claudio.henriquezt@usm.cl", oficina: "A-157" },
+      { nombre: "Cristian Hernández", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "cristian.hernandezpe@usm.cl", oficina: "A-157" },
+      { nombre: "Daniel Vidal", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "daniel.vidalf@usm.cl", oficina: "A-157" },
+      { nombre: "Eduardo Hirsh", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "eduardo.hirsh@usm.cl", oficina: "A-157" },
+      { nombre: "Enrique Otárola", horario: "Martes 14:40 a 15:50 (Bloques 9-10)", email: "enrique.otarola@usm.cl", oficina: "A-148" },
+      { nombre: "Erwin Hernández", horario: "L-M-Mi-J 08:15 a 08:50 (Bloque 1)", email: "erwin.hernandez@usm.cl", oficina: "F-551" },
+      { nombre: "Estefanía Bravo", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "estefania.bravo@usm.cl", oficina: "A-163" },
+      { nombre: "Felipe Asbún", horario: "Martes 16:05 a 17:15 (Bloques 11-12)", email: "felipe.asbun@usm.cl", oficina: "A-157" },
+      { nombre: "Felipe Rivera", horario: "Martes 11:40 a 12:15 (Bloque 6)", email: "felipe.riverame@usm.cl", oficina: "A-157" },
+      { nombre: "Fernanda Cares", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "fernanda.cares@usm.cl", oficina: "A-157" },
+      { nombre: "Fernanda Torres", horario: "Viernes 14:40 a 15:50 (Bloques 9-10)", email: "fernanda.torrest@usm.cl", oficina: "A-157" },
+      { nombre: "Gonzalo Contador", horario: "Solicitar por correo (practicasj.icmat@usm.cl)", email: "gonzalo.contador@usm.cl", oficina: "A-159" },
+      { nombre: "Gredy Salmerón", horario: "Martes 11:05 a 12:15 (Bloques 5-6)", email: "gredy.salmeron@usm.cl", oficina: "A-166" },
+      { nombre: "Igsyl Domínguez", horario: "Lunes 11:05 a 12:15 (Bloques 5-6)", email: "igsyl.dominguez@usm.cl", oficina: "A-164" },
+      { nombre: "Isabel Flores", horario: "Lunes 12:30 a 13:05 (Bloque 7)", email: "isabel.flores@usm.cl", oficina: "A-150" },
+      { nombre: "Isabel Martínez", horario: "Martes 11:05 a 12:15 (Bloques 5-6)", email: "isabel.martineza@usm.cl", oficina: "A-157" },
+      { nombre: "Johan Van Der Molen", horario: "Miércoles 17:00 a 18:00", email: "johan.vandermolen@usm.cl", oficina: "A-159" },
+      { nombre: "José Rosales", horario: "Lunes 16:05 a 17:15 (Bloques 11-12)", email: "jose.rosales.s@usach.cl", oficina: "A-157" },
+      { nombre: "José Yáñez", horario: "Miércoles y Viernes 14:40 a 15:50", email: "jose.yaneze@usm.cl", oficina: "A-160" },
+      { nombre: "Juan Bahamondes", horario: "Martes y Jueves 14:40 a 15:50", email: "juan.bahamondes@usm.cl", oficina: "A-152" },
+      { nombre: "Juan Muñoz", horario: "Viernes 11:05 a 12:15 (Bloques 5-6)", email: "juan.munoz@usm.cl", oficina: "A-152" },
+      { nombre: "Leonel Guerrero", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "leonel.guerrero@usm.cl", oficina: "A-154" },
+      { nombre: "Leonelo Iturriaga", horario: "Martes 16:05 a 17:15 (Bloque 11-12)", email: "leonelo.iturriaga@usm.cl", oficina: "A-151" },
+      { nombre: "Luis Briceño", horario: "Martes y Jueves 14:40 a 15:50", email: "luis.briceno@usm.cl", oficina: "A-147" },
+      { nombre: "Nicolé Geyssel", horario: "Jueves 09:40 a 10:50 (Bloques 3-4)", email: "nicole.geyssel@usm.cl", oficina: "A-162" },
+      { nombre: "Pablo González", horario: "Viernes 08:15 a 09:25 (Bloques 1-2)", email: "pablo.gonzalezl@usm.cl", oficina: "A-157" },
+      { nombre: "Patricio Quiroz", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "patricio.quiroz@usm.cl", oficina: "A-075" },
+      { nombre: "Roberto Ruggiero", horario: "Jueves 09:40 a 10:50 (Bloques 3-4)", email: "roberto.ruggiero@usm.cl", oficina: "A-157" },
+      { nombre: "Rodrigo Lecaros", horario: "Lunes 09:40 a 12:15 (Bloques 3-6)", email: "rodrigo.lecaros@usm.cl", oficina: "A-063" },
+      { nombre: "Sergio López", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "sergio.lopezr@usm.cl", oficina: "A-170" }
     ];
 
-    // CATÁLOGO INICIAL OFICIAL DE RAMOS PRECONFIGURADOS
-    const DEFAULT_CATALOG = [
-      {
-        code: 'MAT070',
-        name: 'Cálculo',
-        fullName: 'Introducción al Cálculo',
-        credits: 6,
-        type: 'MAT070',
-        icon: 'fa-chart-line',
-        badgeBg: 'bg-[#0D473B]',
-        badgeText: 'text-white',
-        pastelBg: '#0D473B',
-        pastelText: '#FFFFFF',
-        description: '3 Certámenes (25% c/u) + 6 Controles (25% PQ). Certamen Global voluntario opcional.',
-        rules: {
-          formula: 'NP = 0.25 × C1 + 0.25 × C2 + 0.25 × C3 + 0.25 × PQ',
-          details: [
-            'Tres certámenes de desarrollo (C1, C2, C3) ponderan el 75% en total (25% c/u).',
-            'Seis controles en taller (Q1 a Q6). Su promedio simple PQ equivale al 25% final.',
-            'El Certamen Global opcional reemplaza la menor nota de certamen para maximizar la nota final.',
-            'Aprobación directa con Nota Final ≥ 55.0.'
-          ]
-        },
-        conditionsList: [
-          { key: 'finalGrade', label: 'Nota final ≥ 55.0', threshold: 55.0 }
-        ],
-        evaluations: [
-          { id: 'q1', codeKey: 'q1', name: 'Control 1 (Q1)', category: 'Controles', weight: 4.16, grade: '', isGraded: false, date: '2026-08-21' },
-          { id: 'q2', codeKey: 'q2', name: 'Control 2 (Q2)', category: 'Controles', weight: 4.16, grade: '', isGraded: false, date: '2026-08-28' },
-          { id: 'q3', codeKey: 'q3', name: 'Control 3 (Q3)', category: 'Controles', weight: 4.16, grade: '', isGraded: false, date: '2026-09-04' },
-          { id: 'c1', codeKey: 'c1', name: 'Certamen 1 (C1)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-09-25' },
-          { id: 'q4', codeKey: 'q4', name: 'Control 4 (Q4)', category: 'Controles', weight: 4.16, grade: '', isGraded: false, date: '2026-10-02' },
-          { id: 'q5', codeKey: 'q5', name: 'Control 5 (Q5)', category: 'Controles', weight: 4.16, grade: '', isGraded: false, date: '2026-10-09' },
-          { id: 'c2', codeKey: 'c2', name: 'Certamen 2 (C2)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-10-23' },
-          { id: 'q6', codeKey: 'q6', name: 'Control 6 (Q6)', category: 'Controles', weight: 4.16, grade: '', isGraded: false, date: '2026-10-30' },
-          { id: 'c3', codeKey: 'c3', name: 'Certamen 3 (C3)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-11-20' },
-        ],
-        extraConfig: { globalGrade: '' }
-      },
-      {
-        code: 'MAT061',
-        name: 'Álgebra',
-        fullName: 'Álgebra Lineal',
-        credits: 6,
-        type: 'MAT061',
-        icon: 'fa-table-cells',
-        badgeBg: 'bg-[#6B46C1]',
-        badgeText: 'text-white',
-        pastelBg: '#6B46C1',
-        pastelText: '#FFFFFF',
-        description: 'Certámenes (75%), Controles (25%), Factor Laboratorio Omega ω (0.9 a 1.1).',
-        rules: {
-          formula: 'NS = min((0.75 × NC + 0.25 × NQ) × ω, 100)',
-          details: [
-            'NC es el promedio de 3 Certámenes (C1, C2, C3).',
-            'NQ es el promedio de 3 Controles de Cátedra/Ayudantía (Q1, Q2, Q3).',
-            'Laboratorio (Factor Omega ω): NL = 0.3*Asistencia + 0.35*Ctrl1 + 0.35*Ctrl2.',
-            'Aprobación directa con NS ≥ 55.0.'
-          ]
-        },
-        conditionsList: [
-          { key: 'finalGrade', label: 'Nota final ≥ 55.0', threshold: 55.0 },
-          { key: 'labGrade', label: 'Nota de Laboratorio ≥ 55.0', threshold: 55.0 }
-        ],
-        evaluations: [
-          { id: 'q1', codeKey: 'q1', name: 'Control 1 (Q1)', category: 'Controles', weight: 8.33, grade: '', isGraded: false, date: '2026-08-24' },
-          { id: 'c1', codeKey: 'c1', name: 'Certamen 1 (C1)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-09-07' },
-          { id: 'q2', codeKey: 'q2', name: 'Control 2 (Q2)', category: 'Controles', weight: 8.33, grade: '', isGraded: false, date: '2026-10-05' },
-          { id: 'c2', codeKey: 'c2', name: 'Certamen 2 (C2)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-10-19' },
-          { id: 'q3', codeKey: 'q3', name: 'Control 3 (Q3)', category: 'Controles', weight: 8.33, grade: '', isGraded: false, date: '2026-11-09' },
-          { id: 'c3', codeKey: 'c3', name: 'Certamen 3 (C3)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-11-23' },
-        ],
-        extraConfig: { labAsistencia: 100, labCtrl1: 55, labCtrl2: 55, globalGrade: '' }
-      },
-      {
-        code: 'FIS111',
-        name: 'Física',
-        fullName: 'Física General Mecánica',
-        credits: 6,
-        type: 'FIS111',
-        icon: 'fa-atom',
-        badgeBg: 'bg-[#059669]',
-        badgeText: 'text-white',
-        pastelBg: '#059669',
-        pastelText: '#FFFFFF',
-        description: 'Certámenes (75%), Controles (10% top 4), Tareas (15% top 3), NL ≥ 55 y Factor α.',
-        rules: {
-          formula: 'PS = α × [0.8 × (0.75 × PCe + 0.10 × PCo + 0.15 × PTa) + 0.20 × NL]',
-          details: [
-            'Promedio Controles (PCo) considera las 4 mejores notas de 5 controles.',
-            'Promedio Tareas (PTa) considera las 3 mejores notas de 5 tareas.',
-            'Exigencias obligatorias: Promedio Certámenes PCe ≥ 50 y NL ≥ 55.'
-          ]
-        },
-        conditionsList: [
-          { key: 'finalGrade', label: 'Nota final ≥ 55.0', threshold: 55.0 },
-          { key: 'certAvg', label: 'Promedio Certámenes ≥ 50.0', threshold: 50.0 },
-          { key: 'labGrade', label: 'Nota de Laboratorio ≥ 55.0', threshold: 55.0 }
-        ],
-        evaluations: [
-          { id: 'ta1', codeKey: 'ta1', name: 'Tarea 1 (Ta1)', category: 'Tareas', weight: 3.0, grade: '', isGraded: false, date: '2026-08-11' },
-          { id: 'ta2', codeKey: 'ta2', name: 'Tarea 2 (Ta2)', category: 'Tareas', weight: 3.0, grade: '', isGraded: false, date: '2026-08-25' },
-          { id: 'co1', codeKey: 'co1', name: 'Control 1 (Co1)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-08-28' },
-          { id: 'ce1', codeKey: 'ce1', name: 'Certamen 1 (Ce1)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-09-07' },
-          { id: 'co2', codeKey: 'co2', name: 'Control 2 (Co2)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-09-25' },
-          { id: 'ta3', codeKey: 'ta3', name: 'Tarea 3 (Ta3)', category: 'Tareas', weight: 3.0, grade: '', isGraded: false, date: '2026-09-29' },
-          { id: 'co3', codeKey: 'co3', name: 'Control 3 (Co3)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-10-09' },
-          { id: 'ta4', codeKey: 'ta4', name: 'Tarea 4 (Ta4)', category: 'Tareas', weight: 3.0, grade: '', isGraded: false, date: '2026-10-13' },
-          { id: 'ce2', codeKey: 'ce2', name: 'Certamen 2 (Ce2)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-10-19' },
-          { id: 'co4', codeKey: 'co4', name: 'Control 4 (Co4)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-10-30' },
-          { id: 'ta5', codeKey: 'ta5', name: 'Tarea 5 (Ta5)', category: 'Tareas', weight: 3.0, grade: '', isGraded: false, date: '2026-11-10' },
-          { id: 'co5', codeKey: 'co5', name: 'Control 5 (Co5)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-11-13' },
-          { id: 'ce3', codeKey: 'ce3', name: 'Certamen 3 (Ce3)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-11-16' },
-        ],
-        extraConfig: { labGrade: 55, attendanceAlpha: 1.0, globalGrade: '' }
-      },
-      {
-        code: 'INF129',
-        name: 'Programación',
-        fullName: 'Introducción a la Programación',
-        credits: 7,
-        type: 'INF129',
-        icon: 'fa-code',
-        badgeBg: 'bg-[#D97706]',
-        badgeText: 'text-white',
-        pastelBg: '#D97706',
-        pastelText: '#FFFFFF',
-        description: 'Certámenes (50%), Controles Lab (20%), Tareas (20%), Formativas (5%), ECA (5%). C ≥ 55.',
-        rules: {
-          formula: 'P = 0.50 × C + 0.20 × CTL + 0.20 × T + 0.05 × EF + 0.05 × ECA',
-          details: [
-            '2 Certámenes presenciales en papel (50% promedio C).',
-            'Controles en Laboratorio CTL (20%) y Tareas en Ayudantía T (20%).',
-            'Requisito obligatorio: Promedio de certámenes C ≥ 55.0 para aprobar.'
-          ]
-        },
-        conditionsList: [
-          { key: 'finalGrade', label: 'Nota final ≥ 55.0', threshold: 55.0 },
-          { key: 'certAvg', label: 'Promedio Certámenes ≥ 55.0', threshold: 55.0 }
-        ],
-        evaluations: [
-          { id: 'ctl1', codeKey: 'ctl1', name: 'Control 1 (Unidad 1)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-08-14' },
-          { id: 'ctl2', codeKey: 'ctl2', name: 'Control 2 (Unidad 2)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-08-21' },
-          { id: 'ctl3', codeKey: 'ctl3', name: 'Control 3 (Unidad 3)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-08-28' },
-          { id: 'ctl4', codeKey: 'ctl4', name: 'Control 4 (Unidad 4)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-09-11' },
-          { id: 't1', codeKey: 't1', name: 'Tarea 1 (Unidades 1-3)', category: 'Tareas', weight: 5.0, grade: '', isGraded: false, date: '2026-09-04' },
-          { id: 'c1', codeKey: 'c1', name: 'Certamen 1 (Papel)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-10-09' },
-          { id: 'ctl5', codeKey: 'ctl5', name: 'Control 5 (Unidad 5)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-09-25' },
-          { id: 'ctl6', codeKey: 'ctl6', name: 'Control 6 (Unidad 6)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-10-23' },
-          { id: 't2', codeKey: 't2', name: 'Tarea 2 (Unidades 4-5)', category: 'Tareas', weight: 5.0, grade: '', isGraded: false, date: '2026-10-02' },
-          { id: 'ctl7', codeKey: 'ctl7', name: 'Control 7 (Unidad 7)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-11-06' },
-          { id: 't3', codeKey: 't3', name: 'Tarea 3 (Unidad 6)', category: 'Tareas', weight: 5.0, grade: '', isGraded: false, date: '2026-10-30' },
-          { id: 'ctl8', codeKey: 'ctl8', name: 'Control 8 (Unidad 8)', category: 'Controles', weight: 2.5, grade: '', isGraded: false, date: '2026-11-13' },
-          { id: 't4', codeKey: 't4', name: 'Tarea 4 (Unidades 7-8)', category: 'Tareas', weight: 5.0, grade: '', isGraded: false, date: '2026-11-20' },
-          { id: 'c2', codeKey: 'c2', name: 'Certamen 2 (Papel)', category: 'Certámenes', weight: 25.0, grade: '', isGraded: false, date: '2026-11-20' },
-          { id: 'ef', codeKey: 'ef', name: 'Evaluaciones Formativas (EF)', category: 'Laboratorios/Formativas', weight: 5.0, grade: '', isGraded: false, date: '2026-11-27' },
-          { id: 'eca', codeKey: 'eca', name: 'Ejercicios Autocorregidos (ECA)', category: 'Laboratorios/Formativas', weight: 5.0, grade: '', isGraded: false, date: '2026-11-27' }
-        ],
-        extraConfig: { globalGrade: '' }
+    // Load LocalStorage
+    function init() {
+      const saved = localStorage.getItem('rumbo_state_v4');
+      if(saved) state = JSON.parse(saved);
+      renderSemesterSelect();
+      renderSidebar();
+      navigate(state.activeTab);
+    }
+
+    function saveState() {
+      localStorage.setItem('rumbo_state_v4', JSON.stringify(state));
+    }
+
+    function renderSemesterSelect() {
+      const select = document.getElementById('semesterSelect');
+      select.innerHTML = Object.keys(state.semesters).map(key => `
+        <option value="${key}" ${state.currentSemester === key ? 'selected' : ''}>Semestre ${state.semesters[key].name}</option>
+      `).join('');
+    }
+
+    function changeSemester(val) {
+      state.currentSemester = val;
+      renderSidebar();
+      navigate('dashboard');
+    }
+
+    function renderSidebar() {
+      const container = document.getElementById('sidebar-courses');
+      const courses = state.semesters[state.currentSemester]?.courses || [];
+      
+      container.innerHTML = courses.map(c => `
+        <div class="course-nav-item ${state.activeTab === c.id ? 'active' : ''}" onclick="navigate('${c.id}')">
+          <span>${c.name}</span>
+          <span class="course-badge ${c.bg}">${c.id}</span>
+        </div>
+      `).join('');
+    }
+
+    function navigate(tab) {
+      state.activeTab = tab;
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      const activeNav = document.getElementById(`btn-nav-${tab}`);
+      if(activeNav) activeNav.classList.add('active');
+      
+      renderSidebar();
+      const main = document.getElementById('main-content');
+
+      if(tab === 'dashboard') renderDashboard(main);
+      else if(tab === 'calendar') renderCalendar(main);
+      else if(tab === 'profs') renderProfs(main);
+      else if(tab === 'library') renderLibrary(main);
+      else if(tab === 'admin') renderAdminPanel(main);
+      else renderCourse(main, tab);
+      
+      saveState();
+    }
+
+    // ADMIN PASSWORD VERIFICATION
+    function promptAdminPassword() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom:1rem;">🔐 Acceso Restringido Administrador</h2>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.2rem;">Por favor ingresa la contraseña para acceder al panel de administración.</p>
+        
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" id="adminPassInput" placeholder="••••••••" onkeyup="if(event.key==='Enter') checkAdminPass()">
+        </div>
+        <div id="passErrorMsg" style="color:var(--danger-text); font-size:0.85rem; font-weight:700; margin-bottom:1rem; display:none;">Contraseña incorrecta. Inténtalo de nuevo.</div>
+        
+        <div style="display:flex; justify-content:flex-end; gap:1rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="checkAdminPass()">Ingresar</button>
+        </div>
+      `;
+      modal.classList.add('open');
+      setTimeout(() => document.getElementById('adminPassInput').focus(), 100);
+    }
+
+    function checkAdminPass() {
+      const pass = document.getElementById('adminPassInput').value;
+      if(pass === 'alga092001') {
+        closeModal();
+        navigate('admin');
+      } else {
+        document.getElementById('passErrorMsg').style.display = 'block';
       }
-    ];
+    }
 
-    const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    // DASHBOARD VIEW
+    function renderDashboard(container) {
+      const courses = state.semesters[state.currentSemester]?.courses || [];
+      let totalSct = 0;
+      let weightedSum = 0;
 
-    function App() {
-      // ESTADO GLOBAL
-      const [semesters, setSemesters] = useState([]);
-      const [activeSemesterId, setActiveSemesterId] = useState('');
-      const [activeTab, setActiveTab] = useState('my_notes');
-      const [activeCourseId, setActiveCourseId] = useState(null);
+      const courseCards = courses.map(c => {
+        const calc = calculateCourseGrade(c.id);
+        totalSct += c.sct;
+        weightedSum += calc.finalGrade * c.sct;
 
-      const [catalog, setCatalog] = useState([]);
-      const [customEvents, setCustomEvents] = useState([]);
+        return `
+          <div class="card" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="navigate('${c.id}')">
+            <div>
+              <span class="course-badge ${c.bg}" style="font-size: 0.8rem;">${c.id}</span>
+              <h3 style="margin-top: 0.4rem; font-size: 1.2rem;">${c.name}</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Puntaje actual: ${calc.currentScore.toFixed(1)} / 100.0</p>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 2rem; font-weight: 800; color: ${calc.finalGrade >= 55 ? 'var(--usm-green)' : '#9B1C1C'}">${calc.finalGrade.toFixed(1)}</div>
+              <span class="status-pill ${calc.finalGrade >= 55 ? 'status-approved' : 'status-failed'}">
+                ${calc.finalGrade >= 55 ? 'Aprobado ✓' : 'Reprobado ✕'}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
 
-      // BÚSQUEDAS Y FILTROS
-      const [profSearchTerm, setProfSearchTerm] = useState('');
-      const [catalogSearchTerm, setCatalogSearchTerm] = useState('');
+      const ppa = totalSct > 0 ? (weightedSum / totalSct) : 0;
 
-      // CALENDARIO
-      const [calendarViewMode, setCalendarViewMode] = useState('grid');
-      const [currentYear, setCurrentYear] = useState(2026);
-      const [currentMonthIdx, setCurrentMonthIdx] = useState(9); // Octubre 2026
+      container.innerHTML = `
+        <div class="card hero-card">
+          <div class="hero-header">
+            <div>
+              <h2>Resumen de Semestre</h2>
+              <p style="opacity:0.8; font-size: 0.9rem;">${state.semesters[state.currentSemester].name}</p>
+            </div>
+          </div>
+          <div class="hero-score-box">
+            <div class="hero-score">${ppa.toFixed(1)}</div>
+            <div class="hero-max">PPA Semestral</div>
+          </div>
+        </div>
+        <h3 style="margin-bottom: 1rem; font-weight: 800;">Tus Asignaturas</h3>
+        ${courseCards.length > 0 ? courseCards : '<div class="card" style="text-align:center; color:var(--text-muted);">No tienes asignaturas en este semestre. Haz clic en <strong>+</strong> para añadir una.</div>'}
+      `;
+    }
 
-      // MODALES
-      const [showRuleModal, setShowRuleModal] = useState(false);
-      const [showAddSemesterModal, setShowAddSemesterModal] = useState(false);
-      const [showAddCourseToSemModal, setShowAddCourseToSemModal] = useState(null);
-      const [showAddEventModal, setShowAddEventModal] = useState(false);
-      const [showCustomCourseModal, setShowCustomCourseModal] = useState(false);
-      const [showAutoParserModal, setShowAutoParserModal] = useState(false);
-      const [selectedDayCell, setSelectedDayCell] = useState(null);
+    // CALCULATE GRADES LOGIC
+    function calculateCourseGrade(courseId) {
+      const grades = state.grades[courseId] || {};
+      
+      if(courseId === 'MAT070') {
+        const c1 = parseFloat(grades['c1']) || 0;
+        const c2 = parseFloat(grades['c2']) || 0;
+        const c3 = parseFloat(grades['c3']) || 0;
+        const qGrades = [1,2,3,4,5,6].map(i => parseFloat(grades[`q${i}`]) || 0);
+        const pq = qGrades.reduce((a,b)=>a+b, 0) / 6;
 
-      // FORMULARIO DE SIMULADOR
-      const [simSourceEvId, setSimSourceEvId] = useState('');
-      const [simTargetType, setSimTargetType] = useState('next');
-
-      // FORMULARIOS DE MODAL
-      const [newSemName, setNewSemName] = useState('');
-      const [eventTitle, setEventTitle] = useState('');
-      const [eventDate, setEventDate] = useState('');
-      const [eventCourseCode, setEventCourseCode] = useState('');
-
-      const [customName, setCustomName] = useState('');
-      const [customCode, setCustomCode] = useState('');
-      const [customCredits, setCustomCredits] = useState(6);
-      const [customHex, setCustomHex] = useState('#2563EB');
-
-      const [pautaInputText, setPautaInputText] = useState('');
-
-      // CARGA DE LOCALSTORAGE
-      useEffect(() => {
-        try {
-          const saved = localStorage.getItem('rumbo_usm_v7_data');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (parsed.semesters && parsed.semesters.length > 0) {
-              setSemesters(parsed.semesters);
-              setActiveSemesterId(parsed.activeSemesterId || parsed.semesters[0].id);
-            }
-            if (parsed.catalog && parsed.catalog.length > 0) {
-              setCatalog(parsed.catalog);
-            } else {
-              setCatalog(DEFAULT_CATALOG);
-            }
-            if (parsed.customEvents) setCustomEvents(parsed.customEvents);
-          } else {
-            const defaultSem = {
-              id: 'sem_2026_2',
-              name: '2026 · 2° Semestre',
-              fullName: 'Semestre 2026 - 2°',
-              courses: DEFAULT_CATALOG.map(c => ({
-                ...c,
-                id: 'course_' + c.code,
-                evaluations: c.evaluations.map((ev, idx) => ({ ...ev, id: `ev_${c.code}_${idx}` }))
-              }))
-            };
-            setSemesters([defaultSem]);
-            setActiveSemesterId(defaultSem.id);
-            setCatalog(DEFAULT_CATALOG);
-            setActiveCourseId('course_MAT070');
-          }
-        } catch (e) {
-          console.error("Error al cargar localStorage:", e);
-        }
-      }, []);
-
-      // GUARDADO AUTOMÁTICO EN LOCALSTORAGE
-      useEffect(() => {
-        if (semesters.length > 0) {
-          const payload = { semesters, activeSemesterId, catalog, customEvents };
-          localStorage.setItem('rumbo_usm_v7_data', JSON.stringify(payload));
-        }
-      }, [semesters, activeSemesterId, catalog, customEvents]);
-
-      const currentSemester = useMemo(() => {
-        return semesters.find(s => s.id === activeSemesterId) || semesters[0];
-      }, [semesters, activeSemesterId]);
-
-      const activeCourse = useMemo(() => {
-        if (!currentSemester || !activeCourseId) return null;
-        return currentSemester.courses.find(c => c.id === activeCourseId) || currentSemester.courses[0] || null;
-      }, [currentSemester, activeCourseId]);
-
-      // FIX PARA INGRESO RÁPIDO DE NOTAS (SIN CEROS A LA IZQUIERDA COMO 070)
-      const sanitizeGradeInput = (val) => {
-        if (val === '' || val === null || val === undefined) return '';
-        let str = String(val).trim();
-        // Eliminar ceros sobrantes al inicio a menos que sea sólo '0' o decimal '0.'
-        if (/^0\d+/.test(str)) {
-          str = str.replace(/^0+/, '');
-        }
-        const num = parseFloat(str);
-        if (isNaN(num)) return '';
-        return Math.max(0, Math.min(100, num));
-      };
-
-      // MOTOR DE CÁLCULO DE NOTAS Y PUNTAJES EN TIEMPO REAL
-      const calculateCourse = (course, overrideGrades = {}) => {
-        if (!course) {
-          return {
-            finalGrade: 0,
-            earnedPoints: 0,
-            gradedWeight: 0,
-            remainingWeight: 100,
-            neededGrade: 0,
-            certAvg: 0,
-            labGrade: 55,
-            conditions: [{ text: 'Nota final ≥ 55.0', passed: false, label: 'Pendiente' }]
-          };
+        const currentScore = (c1*0.25) + (c2*0.25) + (c3*0.25) + (pq*0.25);
+        let finalGrade = currentScore;
+        const global = parseFloat(grades['global']);
+        if(!isNaN(global) && global > 0) {
+          const minC = Math.min(c1, c2, c3);
+          finalGrade = currentScore + Math.max(0, (global - minC)*0.25);
         }
 
-        const evs = (course.evaluations || []).map(e => {
-          const overVal = overrideGrades[e.id];
-          const hasOverride = overVal !== undefined && overVal !== '';
-          const gradeVal = hasOverride ? parseFloat(overVal) : parseFloat(e.grade);
-          const isGraded = hasOverride ? true : (e.isGraded || (!isNaN(gradeVal) && e.grade !== ''));
-          return {
-            ...e,
-            grade: !isNaN(gradeVal) ? gradeVal : 0,
-            isGraded: !!isGraded
-          };
-        });
-
-        let gradedWeight = 0;
-        let earnedPoints = 0;
-
-        // CÁLCULO ESPECÍFICO MAT070
-        if (course.type === 'MAT070') {
-          const c1Ev = evs.find(e => e.codeKey === 'c1');
-          const c2Ev = evs.find(e => e.codeKey === 'c2');
-          const c3Ev = evs.find(e => e.codeKey === 'c3');
-
-          let c1 = c1Ev && c1Ev.isGraded ? c1Ev.grade : 0;
-          let c2 = c2Ev && c2Ev.isGraded ? c2Ev.grade : 0;
-          let c3 = c3Ev && c3Ev.isGraded ? c3Ev.grade : 0;
-
-          const controls = evs.filter(e => e.category === 'Controles');
-          let qSum = 0, qCnt = 0;
-          controls.forEach(q => { if (q.isGraded) { qSum += q.grade; qCnt++; } });
-          const pq = qCnt > 0 ? (qSum / qCnt) : 0;
-
-          if (c1Ev && c1Ev.isGraded) { earnedPoints += 0.25 * c1; gradedWeight += 25; }
-          if (c2Ev && c2Ev.isGraded) { earnedPoints += 0.25 * c2; gradedWeight += 25; }
-          if (c3Ev && c3Ev.isGraded) { earnedPoints += 0.25 * c3; gradedWeight += 25; }
-          if (qCnt > 0) {
-            const w = (qCnt / Math.max(1, controls.length)) * 25;
-            earnedPoints += (w / 100) * pq;
-            gradedWeight += w;
-          }
-
-          let finalGrade = earnedPoints;
-          const globalVal = overrideGrades['global'] !== undefined 
-            ? parseFloat(overrideGrades['global']) 
-            : parseFloat(course.extraConfig?.globalGrade);
-
-          if (!isNaN(globalVal) && globalVal > 0) {
-            const minC = Math.min(c1, c2, c3);
-            if (globalVal > minC) {
-              finalGrade = earnedPoints + (globalVal - minC) * 0.25;
-            }
-          }
-
-          gradedWeight = Math.round(gradedWeight);
-          const remainingWeight = Math.max(0, 100 - gradedWeight);
-          const neededGrade = remainingWeight > 0 ? Math.max(0, (PASSING_GRADE - earnedPoints) / (remainingWeight / 100)) : 0;
-
-          const isPassed = finalGrade >= PASSING_GRADE;
-
-          return {
-            finalGrade: Math.round(finalGrade * 10) / 10,
-            earnedPoints: Math.round(earnedPoints * 10) / 10,
-            gradedWeight,
-            remainingWeight,
-            neededGrade: Math.round(neededGrade * 10) / 10,
-            conditions: [
-              {
-                text: 'Nota final ≥ 55.0',
-                passed: isPassed,
-                label: isPassed ? 'Cumplida ✓' : (remainingWeight > 0 ? 'Pendiente' : 'Incumplida ✕')
-              }
-            ]
-          };
-        }
-
-        // CÁLCULO ESPECÍFICO MAT061
-        if (course.type === 'MAT061') {
-          let certs = evs.filter(e => e.category === 'Certámenes');
-          let controls = evs.filter(e => e.category === 'Controles');
-
-          let cSum = 0, cCount = 0;
-          certs.forEach(c => { if (c.isGraded) { cSum += c.grade; cCount++; earnedPoints += 0.25 * c.grade; } });
-          const nc = cCount > 0 ? (cSum / Math.max(1, certs.length)) : 0;
-
-          let qSum = 0, qCount = 0;
-          controls.forEach(q => { if (q.isGraded) { qSum += q.grade; qCount++; earnedPoints += (25 / Math.max(1, controls.length) / 100) * q.grade; } });
-          const nq = qCount > 0 ? (qSum / Math.max(1, controls.length)) : 0;
-
-          const asist = parseFloat(course.extraConfig?.labAsistencia ?? 100);
-          const ctl1 = parseFloat(course.extraConfig?.labCtrl1 ?? 55);
-          const ctl2 = parseFloat(course.extraConfig?.labCtrl2 ?? 55);
-          const nl = 0.30 * asist + 0.35 * ctl1 + 0.35 * ctl2;
-
-          let omega = nl >= 55 ? ((79 / 90) + (nl / 450)) : ((9 / 10) + (nl / 550));
-          const ns = Math.min(100, (0.75 * nc + 0.25 * nq) * omega);
-
-          gradedWeight = (cCount / Math.max(1, certs.length)) * 75 + (qCount / Math.max(1, controls.length)) * 25;
-          const remainingWeight = Math.max(0, 100 - Math.round(gradedWeight));
-          const neededGrade = remainingWeight > 0 ? Math.max(0, (PASSING_GRADE - ns) / (remainingWeight / 100)) : 0;
-
-          return {
-            finalGrade: Math.round(ns * 10) / 10,
-            earnedPoints: Math.round(earnedPoints * 10) / 10,
-            gradedWeight: Math.round(gradedWeight),
-            remainingWeight: Math.round(remainingWeight),
-            neededGrade: Math.round(neededGrade * 10) / 10,
-            labGrade: Math.round(nl * 10) / 10,
-            conditions: [
-              { text: 'Nota final ≥ 55.0', passed: ns >= PASSING_GRADE, label: ns >= PASSING_GRADE ? 'Cumplida ✓' : (remainingWeight > 0 ? 'Pendiente' : 'Incumplida ✕') },
-              { text: 'Nota de Laboratorio ≥ 55.0', passed: nl >= 55.0, label: nl >= 55.0 ? 'Cumplida ✓' : 'Incumplida ✕' }
-            ]
-          };
-        }
-
-        // CÁLCULO ESPECÍFICO FIS111
-        if (course.type === 'FIS111') {
-          let certs = evs.filter(e => e.category === 'Certámenes');
-          let controls = evs.filter(e => e.category === 'Controles');
-          let tareas = evs.filter(e => e.category === 'Tareas');
-
-          let cSum = 0, cCount = 0;
-          certs.forEach(c => { if (c.isGraded) { cSum += c.grade; cCount++; earnedPoints += 0.20 * c.grade; } });
-          const pce = cCount > 0 ? (cSum / cCount) : 0;
-
-          let coGrades = controls.filter(c => c.isGraded).map(c => c.grade).sort((a,b)=>b-a);
-          let top4Co = coGrades.slice(0, 4);
-          const pco = top4Co.length > 0 ? (top4Co.reduce((a,b)=>a+b, 0) / top4Co.length) : 0;
-
-          let taGrades = tareas.filter(t => t.isGraded).map(t => t.grade).sort((a,b)=>b-a);
-          let top3Ta = taGrades.slice(0, 3);
-          const pta = top3Ta.length > 0 ? (top3Ta.reduce((a,b)=>a+b, 0) / top3Ta.length) : 0;
-
-          const nl = parseFloat(course.extraConfig?.labGrade ?? 55);
-          const alpha = parseFloat(course.extraConfig?.attendanceAlpha ?? 1.0);
-
-          let ps = alpha * (0.8 * (0.75 * pce + 0.10 * pco + 0.15 * pta) + 0.2 * nl);
-
-          gradedWeight = (cCount / Math.max(1, certs.length)) * 60 + (coGrades.length / Math.max(1, controls.length)) * 8 + (taGrades.length / Math.max(1, tareas.length)) * 12 + 20;
-          const remainingWeight = Math.max(0, 100 - Math.round(gradedWeight));
-          const neededGrade = remainingWeight > 0 ? Math.max(0, (PASSING_GRADE - ps) / (remainingWeight / 100)) : 0;
-
-          return {
-            finalGrade: Math.round(ps * 10) / 10,
-            earnedPoints: Math.round(earnedPoints * 10) / 10,
-            gradedWeight: Math.round(gradedWeight),
-            remainingWeight: Math.round(remainingWeight),
-            neededGrade: Math.round(neededGrade * 10) / 10,
-            certAvg: Math.round(pce * 10) / 10,
-            labGrade: Math.round(nl * 10) / 10,
-            conditions: [
-              { text: 'Nota final ≥ 55.0', passed: ps >= PASSING_GRADE, label: ps >= PASSING_GRADE ? 'Cumplida ✓' : (remainingWeight > 0 ? 'Pendiente' : 'Incumplida ✕') },
-              { text: 'Promedio Certámenes ≥ 50.0', passed: pce >= 50.0, label: pce >= 50.0 ? 'Cumplida ✓' : (cCount < certs.length ? 'Pendiente' : 'Incumplida ✕') },
-              { text: 'Nota de Laboratorio ≥ 55.0', passed: nl >= 55.0, label: nl >= 55.0 ? 'Cumplida ✓' : 'Incumplida ✕' }
-            ]
-          };
-        }
-
-        // CÁLCULO ESTÁNDAR
-        evs.forEach(ev => {
-          if (ev.isGraded) {
-            gradedWeight += ev.weight;
-            earnedPoints += ev.grade * (ev.weight / 100);
-          }
-        });
-        const remainingWeight = Math.max(0, 100 - Math.round(gradedWeight));
-        const neededGrade = remainingWeight > 0 ? Math.max(0, (PASSING_GRADE - earnedPoints) / (remainingWeight / 100)) : 0;
+        const reqC3 = Math.max(0, (55 - (c1*0.25 + c2*0.25 + pq*0.25)) / 0.25);
 
         return {
-          finalGrade: Math.round(earnedPoints * 10) / 10,
-          earnedPoints: Math.round(earnedPoints * 10) / 10,
-          gradedWeight: Math.round(gradedWeight),
-          remainingWeight: Math.round(remainingWeight),
-          neededGrade: Math.round(neededGrade * 10) / 10,
+          currentScore,
+          finalGrade,
+          required: reqC3,
+          reqName: 'Certamen 3 (C3)',
           conditions: [
-            { text: 'Nota final ≥ 55.0', passed: earnedPoints >= PASSING_GRADE, label: earnedPoints >= PASSING_GRADE ? 'Cumplida ✓' : (remainingWeight > 0 ? 'Pendiente' : 'Incumplida ✕') }
+            { text: 'Nota final ≥ 55.0', passed: finalGrade >= 55, label: finalGrade >= 55 ? 'Cumplida ✓' : 'Pendiente' }
           ]
         };
+      }
+
+      return {
+        currentScore: 55,
+        finalGrade: 55,
+        required: 55,
+        reqName: 'Certamen Final',
+        conditions: [
+          { text: 'Nota final ≥ 55.0', passed: true, label: 'Cumplida ✓' }
+        ]
       };
+    }
 
-      // EVALUACIONES PENDIENTES DE NOTA EN EL RAMO ACTIVO
-      const pendingEvaluations = useMemo(() => {
-        if (!activeCourse || !activeCourse.evaluations) return [];
-        return activeCourse.evaluations.filter(e => !e.isGraded && (e.grade === '' || e.grade === null || e.grade === undefined));
-      }, [activeCourse]);
+    // COURSE VIEW WITH CATEGORY GROUPING
+    function renderCourse(container, courseId) {
+      const course = state.semesters[state.currentSemester].courses.find(c => c.id === courseId);
+      if(!course) return navigate('dashboard');
 
-      // INICIALIZADOR DE SIMULADOR PENDIENTE
-      useEffect(() => {
-        if (pendingEvaluations.length > 0) {
-          if (!simSourceEvId || !pendingEvaluations.some(e => e.id === simSourceEvId)) {
-            setSimSourceEvId(pendingEvaluations[0].id);
-          }
-        } else if (activeCourse && activeCourse.evaluations && activeCourse.evaluations.length > 0) {
-          setSimSourceEvId(activeCourse.evaluations[0].id);
-        }
-      }, [activeCourse, pendingEvaluations]);
+      const calc = calculateCourseGrade(courseId);
+      const evalGroups = getCourseGroupedEvals(courseId);
+      
+      const allEvals = evalGroups.flatMap(g => g.items);
+      const pendingEvals = allEvals.filter(item => !state.grades[courseId]?.[item.id] || state.grades[courseId][item.id] === '');
+      const globalGradeVal = state.grades[courseId]?.['global'] || '';
 
-      // MÉTODOS DE ACTUALIZACIÓN DE NOTAS
-      const updateEvaluation = (courseId, evId, field, value) => {
-        setSemesters(prevSemesters => {
-          return prevSemesters.map(sem => {
-            const updatedCourses = sem.courses.map(course => {
-              if (course.id === courseId) {
-                const updatedEvs = course.evaluations.map(ev => {
-                  if (ev.id === evId) {
-                    const copy = { ...ev, [field]: value };
-                    if (field === 'grade') {
-                      const cleanVal = sanitizeGradeInput(value);
-                      copy.grade = cleanVal;
-                      copy.isGraded = cleanVal !== '';
-                    }
-                    return copy;
-                  }
-                  return ev;
-                });
-                return { ...course, evaluations: updatedEvs };
-              }
-              return course;
-            });
-            return { ...sem, courses: updatedCourses };
-          });
-        });
-      };
-
-      const updateGlobalGrade = (courseId, value) => {
-        const cleanVal = sanitizeGradeInput(value);
-        setSemesters(prevSemesters => {
-          return prevSemesters.map(sem => {
-            const updatedCourses = sem.courses.map(course => {
-              if (course.id === courseId) {
-                return {
-                  ...course,
-                  extraConfig: { ...(course.extraConfig || {}), globalGrade: cleanVal }
-                };
-              }
-              return course;
-            });
-            return { ...sem, courses: updatedCourses };
-          });
-        });
-      };
-
-      // ACCIONES DE GESTIÓN DE RAMOS Y SEMESTRES
-      const handleAddCourseToSemester = (semId, preset) => {
-        const sem = semesters.find(s => s.id === semId);
-        if (sem && sem.courses.some(c => c.code === preset.code)) return;
-
-        const newCourse = {
-          ...preset,
-          id: 'course_' + preset.code + '_' + Date.now(),
-          evaluations: preset.evaluations.map((ev, idx) => ({ ...ev, id: `ev_${preset.code}_${Date.now()}_${idx}` }))
-        };
-
-        setSemesters(prev => prev.map(s => s.id === semId ? { ...s, courses: [...s.courses, newCourse] } : s));
-        setShowAddCourseToSemModal(null);
-        if (semId === activeSemesterId) setActiveCourseId(newCourse.id);
-        if (window.confetti) window.confetti({ particleCount: 35, spread: 50, origin: { y: 0.6 } });
-      };
-
-      const handleDeleteCourseFromSemester = (semId, courseId) => {
-        setSemesters(prev => prev.map(s => {
-          if (s.id === semId) {
-            return { ...s, courses: s.courses.filter(c => c.id !== courseId) };
-          }
-          return s;
-        }));
-        if (activeCourseId === courseId) {
-          const remaining = (currentSemester?.courses || []).filter(c => c.id !== courseId);
-          setActiveCourseId(remaining.length > 0 ? remaining[0].id : null);
-        }
-      };
-
-      const handleCreateSemester = (e) => {
-        e.preventDefault();
-        if (!newSemName.trim()) return;
-        const semName = newSemName.trim();
-        const newSem = {
-          id: 'sem_' + Date.now(),
-          name: semName,
-          fullName: 'Semestre ' + semName,
-          courses: []
-        };
-        setSemesters([...semesters, newSem]);
-        setActiveSemesterId(newSem.id);
-        setShowAddSemesterModal(false);
-        setNewSemName('');
-      };
-
-      const handleDeleteSemester = (semId) => {
-        if (semesters.length <= 1) return alert("Debes mantener al menos un semestre activo.");
-        const updated = semesters.filter(s => s.id !== semId);
-        setSemesters(updated);
-        setActiveSemesterId(updated[0].id);
-      };
-
-      // EVENTOS DE CALENDARIO
-      const handleAddEvent = (e) => {
-        e.preventDefault();
-        if (!eventTitle.trim() || !eventDate) return;
-        const code = eventCourseCode || 'PERSONAL';
-        setCustomEvents([...customEvents, {
-          id: 'ce_' + Date.now(),
-          title: eventTitle.trim(),
-          date: eventDate,
-          courseCode: code,
-          type: code === 'PERSONAL' ? 'Personal' : 'Evaluación'
-        }]);
-        setShowAddEventModal(false);
-        setEventTitle(''); setEventDate(''); setEventCourseCode('');
-      };
-
-      const handleDeleteCalendarEvent = (eventObj) => {
-        if (eventObj.isSystem) {
-          updateEvaluation(eventObj.courseId, eventObj.evId, 'date', '');
-        } else {
-          setCustomEvents(customEvents.filter(e => e.id !== eventObj.id));
-        }
-      };
-
-      // GESTIÓN DEL CATÁLOGO DESDE ADMINISTRADOR
-      const handleCreateCatalogCourse = (e) => {
-        e.preventDefault();
-        if (!customName.trim()) return;
-        const codeClean = customCode.trim().toUpperCase() || 'ASIG' + Math.floor(Math.random() * 900 + 100);
-
-        const newTemplate = {
-          code: codeClean,
-          name: customName.trim(),
-          fullName: customName.trim(),
-          credits: parseInt(customCredits) || 6,
-          type: 'STANDARD',
-          icon: 'fa-book',
-          badgeBg: 'bg-[#2563EB]',
-          badgeText: 'text-white',
-          pastelBg: customHex,
-          pastelText: '#FFFFFF',
-          description: 'Asignatura personalizada agregada desde el Panel de Administrador.',
-          rules: {
-            formula: 'NP = Suma Ponderada de Evaluaciones',
-            details: ['Porcentajes totalmente personalizables.', 'Aprobación directa con NP ≥ 55.0.']
-          },
-          conditionsList: [{ key: 'finalGrade', label: 'Nota final ≥ 55.0', threshold: 55.0 }],
-          evaluations: [
-            { id: 'ev_1', name: 'Certamen 1', category: 'Certámenes', weight: 30, grade: '', isGraded: false, date: '' },
-            { id: 'ev_2', name: 'Certamen 2', category: 'Certámenes', weight: 30, grade: '', isGraded: false, date: '' },
-            { id: 'ev_3', name: 'Certamen 3', category: 'Certámenes', weight: 30, grade: '', isGraded: false, date: '' },
-            { id: 'ev_4', name: 'Controles y Tareas', category: 'Controles', weight: 10, grade: '', isGraded: false, date: '' }
-          ],
-          extraConfig: { globalGrade: '' }
-        };
-
-        setCatalog([...catalog, newTemplate]);
-        setShowCustomCourseModal(false);
-        setCustomName(''); setCustomCode('');
-        alert(`¡Asignatura ${codeClean} creada en el catálogo con éxito!`);
-      };
-
-      const handleDeleteCatalogCourse = (codeToDelete) => {
-        if (confirm(`¿Seguro que deseas eliminar el ramo ${codeToDelete} del catálogo?`)) {
-          setCatalog(catalog.filter(c => c.code !== codeToDelete));
-        }
-      };
-
-      // CREADOR AUTOMÁTICO DE RAMOS POR PAUTA/DOCUMENTO (SMART PARSER)
-      const handleAutoParsePauta = (e) => {
-        e.preventDefault();
-        if (!pautaInputText.trim()) return;
-
-        const text = pautaInputText;
-        const codeMatch = text.match(/([A-Z]{3}-?\d{3})/i);
-        const codeClean = codeMatch ? codeMatch[1].replace('-', '').toUpperCase() : 'RAMO' + Math.floor(Math.random() * 900 + 100);
-
-        const nameMatch = text.match(/Asignatura:\s*([^\n]+)/i) || text.match(/Curso:\s*([^\n]+)/i) || text.match(/Nombre:\s*([^\n]+)/i);
-        const nameClean = nameMatch ? nameMatch[1].trim() : `Asignatura ${codeClean}`;
-
-        const sctMatch = text.match(/(\d+)\s*SCT/i) || text.match(/créditos:\s*(\d+)/i);
-        const sctClean = sctMatch ? parseInt(sctMatch[1]) : 6;
-
-        const newTemplate = {
-          code: codeClean,
-          name: nameClean,
-          fullName: nameClean,
-          credits: sctClean,
-          type: 'PARSED',
-          icon: 'fa-brain',
-          badgeBg: 'bg-[#0D473B]',
-          badgeText: 'text-white',
-          pastelBg: '#0D473B',
-          pastelText: '#FFFFFF',
-          description: 'Ramo generado automáticamente mediante análisis inteligente de pauta.',
-          rules: {
-            formula: 'NP = Evaluación Automática',
-            details: ['Estructura procesada desde el reglamento ingresado.']
-          },
-          conditionsList: [{ key: 'finalGrade', label: 'Nota final ≥ 55.0', threshold: 55.0 }],
-          evaluations: [
-            { id: 'ev_1', name: 'Certamen 1 (C1)', category: 'Certámenes', weight: 25, grade: '', isGraded: false, date: '' },
-            { id: 'ev_2', name: 'Certamen 2 (C2)', category: 'Certámenes', weight: 25, grade: '', isGraded: false, date: '' },
-            { id: 'ev_3', name: 'Certamen 3 (C3)', category: 'Certámenes', weight: 25, grade: '', isGraded: false, date: '' },
-            { id: 'ev_4', name: 'Evaluaciones Taller/Controles', category: 'Controles', weight: 25, grade: '', isGraded: false, date: '' }
-          ],
-          extraConfig: { globalGrade: '' }
-        };
-
-        setCatalog([...catalog, newTemplate]);
-        setShowAutoParserModal(false);
-        setPautaInputText('');
-        alert(`🤖 ¡Ramo ${codeClean} (${nameClean}) procesado y añadido al catálogo exitosamente!`);
-      };
-
-      // PPA CALCULATIONS
-      const semesterPPA = useMemo(() => {
-        if (!currentSemester || currentSemester.courses.length === 0) return 0;
-        let totalCredits = 0, weightedSum = 0;
-        currentSemester.courses.forEach(c => {
-          const res = calculateCourse(c);
-          const creds = parseInt(c.credits) || 1;
-          totalCredits += creds;
-          weightedSum += res.finalGrade * creds;
-        });
-        return totalCredits > 0 ? (weightedSum / totalCredits) : 0;
-      }, [currentSemester]);
-
-      const globalPPA = useMemo(() => {
-        let totalCredits = 0, weightedSum = 0;
-        semesters.forEach(sem => {
-          (sem.courses || []).forEach(c => {
-            const res = calculateCourse(c);
-            const creds = parseInt(c.credits) || 1;
-            totalCredits += creds;
-            weightedSum += res.finalGrade * creds;
-          });
-        });
-        return totalCredits > 0 ? (weightedSum / totalCredits) : 0;
-      }, [semesters]);
-
-      // PROCESADOR DE SIMULACIONES
-      const simulationRows = useMemo(() => {
-        if (!activeCourse || !activeCourse.evaluations) return [];
-
-        const sourceEv = activeCourse.evaluations.find(e => e.id === simSourceEvId) || activeCourse.evaluations[0];
-        if (!sourceEv) return [];
-
-        const testScores = [20, 40, 60, 80, 100];
-
-        return testScores.map(scoreVal => {
-          let neededScore = 0;
-
-          if (simTargetType === 'global') {
-            let minNeeded = 101;
-            for (let g = 0; g <= 100; g += 0.5) {
-              const testOver = { [sourceEv.id]: scoreVal, 'global': g };
-              const calc = calculateCourse(activeCourse, testOver);
-              if (calc.finalGrade >= PASSING_GRADE) {
-                minNeeded = g;
-                break;
-              }
-            }
-            neededScore = minNeeded <= 100 ? minNeeded : 100;
-          } else {
-            // Nota en la siguiente evaluación pendiente
-            const nextPending = pendingEvaluations.find(e => e.id !== sourceEv.id);
-            if (!nextPending) {
-              const calc = calculateCourse(activeCourse, { [sourceEv.id]: scoreVal });
-              neededScore = calc.neededGrade;
-            } else {
-              let minNeeded = 101;
-              for (let g = 0; g <= 100; g += 0.5) {
-                const testOver = { [sourceEv.id]: scoreVal, [nextPending.id]: g };
-                const calc = calculateCourse(activeCourse, testOver);
-                if (calc.finalGrade >= PASSING_GRADE) {
-                  minNeeded = g;
-                  break;
-                }
-              }
-              neededScore = minNeeded <= 100 ? minNeeded : 100;
-            }
-          }
-
-          return {
-            sourceGrade: scoreVal,
-            needed: neededScore
-          };
-        });
-      }, [activeCourse, simSourceEvId, simTargetType, pendingEvaluations]);
-
-      const activeCalc = useMemo(() => calculateCourse(activeCourse), [activeCourse]);
-
-      const calendarEvents = useMemo(() => {
-        const events = [];
-        if (!currentSemester) return events;
-
-        currentSemester.courses.forEach(c => {
-          (c.evaluations || []).forEach(ev => {
-            if (ev.date && ev.date.trim() !== '') {
-              events.push({
-                id: `ev_${c.id}_${ev.id}`,
-                courseId: c.id,
-                evId: ev.id,
-                courseCode: c.code,
-                courseName: c.name,
-                title: ev.name,
-                date: ev.date,
-                category: ev.category || 'Evaluación',
-                badgeBg: c.badgeBg || 'bg-[#0D473B]',
-                badgeText: c.badgeText || 'text-white',
-                pastelBg: c.pastelBg || '#0D473B',
-                pastelText: c.pastelText || '#FFFFFF',
-                isSystem: true
-              });
-            }
-          });
-        });
-
-        customEvents.forEach(ce => {
-          const isPersonal = ce.courseCode === 'PERSONAL';
-          const matchCourse = currentSemester.courses.find(c => c.code === ce.courseCode);
-
-          events.push({
-            id: ce.id,
-            courseCode: isPersonal ? 'PERSONAL' : (matchCourse ? matchCourse.code : ce.courseCode),
-            courseName: isPersonal ? 'Evento Personal' : (matchCourse ? matchCourse.name : 'Asignatura'),
-            title: ce.title,
-            date: ce.date,
-            category: ce.type || 'Hito',
-            badgeBg: isPersonal ? 'bg-[#111827]' : (matchCourse ? matchCourse.badgeBg : 'bg-slate-800'),
-            badgeText: 'text-white',
-            pastelBg: isPersonal ? '#111827' : (matchCourse ? matchCourse.pastelBg : '#1E293B'),
-            pastelText: '#FFFFFF',
-            isSystem: false
-          });
-        });
-
-        return events.sort((a, b) => new Date(a.date) - new Date(b.date));
-      }, [currentSemester, customEvents]);
-
-      // REJILLA MENSUAL CALENDARIO
-      const calendarGridDays = useMemo(() => {
-        const year = currentYear;
-        const month = currentMonthIdx;
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-
-        let startingDayOfWeek = firstDay.getDay();
-        startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
-
-        const totalDays = lastDay.getDate();
-        const daysArray = [];
-
-        for (let i = 0; i < startingDayOfWeek; i++) {
-          daysArray.push({ dayNumber: null, dateStr: null, isCurrentMonth: false });
-        }
-
-        for (let d = 1; d <= totalDays; d++) {
-          const monthStr = String(month + 1).padStart(2, '0');
-          const dayStr = String(d).padStart(2, '0');
-          const dateStr = `${year}-${monthStr}-${dayStr}`;
-
-          const dayEvents = calendarEvents.filter(ev => ev.date === dateStr);
-          daysArray.push({
-            dayNumber: d,
-            dateStr,
-            isCurrentMonth: true,
-            events: dayEvents
-          });
-        }
-        return daysArray;
-      }, [currentYear, currentMonthIdx, calendarEvents]);
-
-      const filteredProfessors = useMemo(() => {
-        if (!profSearchTerm.trim()) return DMAT_PROFESSORS;
-        const term = profSearchTerm.toLowerCase().trim();
-        return DMAT_PROFESSORS.filter(p => 
-          p.name.toLowerCase().includes(term) ||
-          p.office.toLowerCase().includes(term) ||
-          p.email.toLowerCase().includes(term)
-        );
-      }, [profSearchTerm]);
-
-      const filteredCatalog = useMemo(() => {
-        if (!catalogSearchTerm.trim()) return catalog;
-        const term = catalogSearchTerm.toLowerCase().trim();
-        return catalog.filter(item => 
-          item.code.toLowerCase().includes(term) ||
-          item.name.toLowerCase().includes(term) ||
-          item.fullName.toLowerCase().includes(term)
-        );
-      }, [catalogSearchTerm, catalog]);
-
-      return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-[#F6F7F2]">
-          
-          {/* HEADER PRINCIPAL */}
-          <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#E2E4DC] px-4 sm:px-6 flex items-center justify-between z-40">
-            <button 
-              onClick={() => { setActiveTab('my_notes'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="flex items-center gap-3 group focus:outline-none"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#0D473B] text-white flex items-center justify-center font-black text-lg shadow-xs group-hover:scale-105 transition-transform">
-                R
-              </div>
-              <div className="text-left">
-                <div className="font-extrabold text-xl tracking-tight text-[#0D473B] leading-none">
-                  rumbo<span className="text-[#10B981]">.</span>
-                </div>
-                <span className="text-[10px] font-medium text-slate-400">USM · San Joaquín</span>
-              </div>
-            </button>
-
-            <div className="flex items-center gap-3">
-              <select
-                value={activeSemesterId}
-                onChange={(e) => setActiveSemesterId(e.target.value)}
-                className="bg-white border border-[#E2E4DC] text-slate-900 font-extrabold text-xs rounded-full px-4 py-1.5 shadow-2xs focus:outline-none cursor-pointer"
-              >
-                {semesters.map(s => (
-                  <option key={s.id} value={s.id}>Semestre {s.name}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`px-3.5 py-1.5 rounded-full font-extrabold text-xs transition-all border flex items-center gap-1.5 ${
-                  activeTab === 'admin'
-                    ? 'bg-[#0D473B] text-white border-[#0D473B] shadow-xs'
-                    : 'bg-[#FAF9F5] text-slate-700 border-[#E2E4DC] hover:bg-white'
-                }`}
-              >
-                <i className="fa-solid fa-gear text-xs"></i>
-                <span>Administrador</span>
-              </button>
+      container.innerHTML = `
+        <div class="card hero-card" style="background-color: ${course.hex}">
+          <div class="hero-header">
+            <div>
+              <span class="course-badge" style="background: rgba(255,255,255,0.2);">${course.id} · ${course.sct} SCT</span>
+              <h1 class="hero-title" style="margin-top: 0.5rem;">${course.name}</h1>
             </div>
-          </header>
+            <button class="rules-btn" onclick="openRulesModal('${courseId}')">📖 Ver reglas</button>
+          </div>
+          <div class="hero-score-box">
+            <div class="hero-score">${calc.finalGrade.toFixed(1)}</div>
+            <div class="hero-max">/ 100.0</div>
+          </div>
+          <div>Puntaje acumulado actual: <strong>${calc.currentScore.toFixed(1)} pts</strong></div>
+        </div>
 
-          {/* LAYOUT PRINCIPAL CON SIDEBAR Y MAIN */}
-          <div className="flex flex-1 pt-16 w-full">
-            
-            {/* SIDEBAR LATERAL */}
-            <aside className="w-full md:w-72 bg-white border-b md:border-b-0 md:border-r border-[#E2E4DC] p-4 flex flex-col gap-6 flex-shrink-0">
-              
-              <div className="space-y-1 text-xs font-bold">
-                <div className="px-3 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">General</div>
-                
-                <button
-                  onClick={() => setActiveTab('my_notes')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all ${
-                    activeTab === 'my_notes'
-                      ? 'bg-[#0D473B] text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-[#FAF9F5]'
-                  }`}
-                >
-                  <i className="fa-solid fa-chart-simple w-4 text-center"></i>
-                  <span>Mis Notas</span>
-                </button>
+        <div class="required-card">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #854D0E; text-transform: uppercase;">Nota requerida para aprobar (55.0)</div>
+          <div class="required-number">${calc.required.toFixed(1)}</div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: #713F12;">Puntaje necesario en <strong>${calc.reqName}</strong> para asegurar la aprobación directa.</div>
+        </div>
 
-                <button
-                  onClick={() => setActiveTab('calendar')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all ${
-                    activeTab === 'calendar'
-                      ? 'bg-[#0D473B] text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-[#FAF9F5]'
-                  }`}
-                >
-                  <i className="fa-solid fa-calendar-days w-4 text-center"></i>
-                  <span>Calendario</span>
-                </button>
+        <div class="course-grid">
+          <div>
+            <div class="card" style="padding:0; overflow:hidden;">
+              <h3 style="padding:1.2rem 1.5rem 0.5rem; font-size:1.1rem; font-weight:800; color:var(--usm-green);">Evaluaciones y Ponderaciones</h3>
+              ${renderGroupedTables(courseId, evalGroups)}
+            </div>
 
-                <button
-                  onClick={() => setActiveTab('office_hours')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all ${
-                    activeTab === 'office_hours'
-                      ? 'bg-[#0D473B] text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-[#FAF9F5]'
-                  }`}
-                >
-                  <i className="fa-solid fa-clock-user w-4 text-center"></i>
-                  <span>Horarios DMat</span>
-                </button>
+            <!-- SIMULADOR INTERACTIVO -->
+            <div class="simulator-container">
+              <div class="simulator-title">🧪 HAY MÁS DE UN CAMINO</div>
+              <h4 style="font-size: 1.1rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem;">¿Y si te va mejor en otra evaluación?</h4>
+              <div class="simulator-sub">Compara combinaciones y elige una para calcular en tiempo real.</div>
 
-                <button
-                  onClick={() => setActiveTab('library')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all ${
-                    activeTab === 'library'
-                      ? 'bg-[#0D473B] text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-[#FAF9F5]'
-                  }`}
-                >
-                  <i className="fa-solid fa-book-bookmark w-4 text-center"></i>
-                  <span>Biblioteca Semestres</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('admin')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl transition-all ${
-                    activeTab === 'admin'
-                      ? 'bg-[#0D473B] text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-[#FAF9F5]'
-                  }`}
-                >
-                  <i className="fa-solid fa-sliders w-4 text-center"></i>
-                  <span>Panel Administrador</span>
-                </button>
+              <div class="simulator-controls">
+                <div class="sim-select-group">
+                  <span class="sim-select-label">Si en...</span>
+                  <select class="sim-select" id="simSourceEval" onchange="renderSimulatorRows('${courseId}')">
+                    ${pendingEvals.map(e => `<option value="${e.id}">${e.name}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="sim-select-group">
+                  <span class="sim-select-label">Quiero calcular...</span>
+                  <select class="sim-select" id="simTargetType" onchange="renderSimulatorRows('${courseId}')">
+                    <option value="next">Otra nota pendiente</option>
+                    <option value="global">Certamen Global</option>
+                  </select>
+                </div>
               </div>
 
-              {/* ASIGNATURAS INSCRITAS */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between px-3 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                  <span>Mis Asignaturas ({currentSemester?.courses.length || 0})</span>
-                  <button
-                    onClick={() => setShowAddCourseToSemModal(activeSemesterId)}
-                    className="hover:text-[#0D473B] font-bold text-sm"
-                    title="Añadir asignatura"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {currentSemester?.courses.map(course => {
-                  const isActive = activeCourseId === course.id && activeTab === 'my_notes';
-                  const calc = calculateCourse(course);
-
-                  return (
-                    <button
-                      key={course.id}
-                      onClick={() => {
-                        setActiveCourseId(course.id);
-                        setActiveTab('my_notes');
-                      }}
-                      className={`w-full text-left p-2.5 rounded-2xl transition-all flex items-center justify-between ${
-                        isActive
-                          ? 'bg-[#E6F0EC] text-[#0D473B] font-extrabold shadow-2xs'
-                          : 'hover:bg-[#FAF9F5] text-slate-800 font-bold'
-                      }`}
-                    >
-                      <span className="text-xs truncate">{course.name}</span>
-                      <span
-                        className="text-[10px] px-2 py-0.5 rounded-md text-white font-bold flex-shrink-0"
-                        style={{ backgroundColor: course.pastelBg || '#0D473B' }}
-                      >
-                        {course.code}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-            </aside>
-
-            {/* CONTENIDO PRINCIPAL */}
-            <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-6xl mx-auto w-full">
-
-              {/* TAB: MIS NOTAS */}
-              {activeTab === 'my_notes' && (
-                <div className="space-y-6">
-                  {activeCourse ? (
-                    <>
-                      {/* HERO CARD DE RAMO */}
-                      <div 
-                        className="text-white rounded-3xl p-6 sm:p-8 shadow-md relative overflow-hidden"
-                        style={{ backgroundColor: activeCourse.pastelBg || '#0D473B' }}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <span className="px-3 py-1 rounded-full text-xs font-black bg-white/20 uppercase tracking-wide">
-                              {activeCourse.code} · {activeCourse.credits} SCT
-                            </span>
-                            <h1 className="text-2xl sm:text-3xl font-black mt-3 leading-tight">
-                              {activeCourse.fullName || activeCourse.name}
-                            </h1>
-                          </div>
-                          <button
-                            onClick={() => setShowRuleModal(true)}
-                            className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white font-extrabold text-xs rounded-xl border border-white/30 backdrop-blur-md transition-all"
-                          >
-                            📖 Ver reglas
-                          </button>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-6">
-                          <div>
-                            <div className="text-xs font-bold text-white/80 uppercase">Nota Proyectada / Final</div>
-                            <div className="text-5xl sm:text-6xl font-black">{activeCalc.finalGrade.toFixed(1)} <span className="text-lg opacity-80">/ 100.0</span></div>
-                          </div>
-
-                          <div className="text-sm font-extrabold bg-white/10 px-4 py-2 rounded-2xl border border-white/20">
-                            Puntaje acumulado actual: <strong>{activeCalc.earnedPoints.toFixed(1)} pts</strong>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* NOTA REQUERIDA PARA APROBAR */}
-                      <div className="bg-[#FEFCE8] border-2 border-[#FEF08A] rounded-2xl p-6 space-y-2">
-                        <div className="text-xs font-black text-[#854D0E] uppercase tracking-wider">
-                          Nota requerida para aprobar (55.0)
-                        </div>
-                        <div className="text-5xl font-black text-[#854D0E] leading-none">
-                          {activeCalc.neededGrade.toFixed(1)}
-                        </div>
-                        <div className="text-sm font-bold text-[#713F12]">
-                          Puntaje necesario en <strong>evaluaciones pendientes</strong> para asegurar la aprobación directa con 55.0.
-                        </div>
-                      </div>
-
-                      {/* LAYOUT DE 2 COLUMNAS (TABLA + CARDS DERECHA FIEL A LA IMAGEN) */}
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
-                        {/* COLUMNA IZQUIERDA (TABLA Y SIMULADOR) */}
-                        <div className="lg:col-span-2 space-y-6">
-                          
-                          {/* TABLA DE EVALUACIONES */}
-                          <div className="bg-white rounded-3xl p-6 border border-[#E2E4DC] shadow-2xs space-y-4">
-                            <h3 className="font-extrabold text-base text-[#0D473B]">Evaluaciones y Ponderaciones</h3>
-                            
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-left text-xs sm:text-sm">
-                                <thead className="bg-[#FAF9F5] text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-[#E2E4DC]">
-                                  <tr>
-                                    <th className="py-2.5 px-3">Evaluación</th>
-                                    <th className="py-2.5 px-3">Ponderación</th>
-                                    <th className="py-2.5 px-3">Nota (0 - 100)</th>
-                                    <th className="py-2.5 px-3">Fecha</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[#E2E4DC]">
-                                  {activeCourse.evaluations.map(ev => (
-                                    <tr key={ev.id} className="hover:bg-[#FAF9F5] transition-colors">
-                                      <td className="py-3 px-3 font-extrabold text-slate-900">{ev.name}</td>
-                                      <td className="py-3 px-3 text-slate-500 font-bold">{ev.weight}%</td>
-                                      <td className="py-3 px-3">
-                                        <input
-                                          type="number"
-                                          min="0" max="100"
-                                          placeholder="—"
-                                          value={ev.grade !== undefined && ev.grade !== null ? ev.grade : ''}
-                                          onFocus={(e) => e.target.select()}
-                                          onChange={(e) => updateEvaluation(activeCourse.id, ev.id, 'grade', e.target.value)}
-                                          className="w-20 border border-[#E2E4DC] rounded-xl px-2.5 py-1 font-black text-center text-sm focus:outline-none focus:border-[#0D473B]"
-                                        />
-                                      </td>
-                                      <td className="py-3 px-3">
-                                        <div className="flex items-center gap-1">
-                                          <input
-                                            type="date"
-                                            value={ev.date || ''}
-                                            onChange={(e) => updateEvaluation(activeCourse.id, ev.id, 'date', e.target.value)}
-                                            className="bg-[#FAF9F5] border border-[#E2E4DC] rounded-lg px-2 py-1 text-xs font-bold"
-                                          />
-                                          {ev.date && (
-                                            <button
-                                              onClick={() => updateEvaluation(activeCourse.id, ev.id, 'date', '')}
-                                              className="text-slate-400 hover:text-rose-600 font-bold px-1"
-                                            >
-                                              ✕
-                                            </button>
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-
-                          {/* SIMULADOR INTERACTIVO */}
-                          <div className="bg-[#FAF5FF] border border-[#E9D5FF] rounded-3xl p-6 space-y-4">
-                            <div>
-                              <span className="text-[10px] font-black uppercase text-purple-700 tracking-wider block">HAY MÁS DE UN CAMINO</span>
-                              <h4 className="text-lg font-black text-slate-900">¿Y si te va mejor en otra evaluación?</h4>
-                              <p className="text-xs text-purple-800">Compara combinaciones y elige una para calcular en tiempo real.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                              <div>
-                                <label className="font-bold text-slate-600 block mb-1">Si en...</label>
-                                <select
-                                  value={simSourceEvId}
-                                  onChange={(e) => setSimSourceEvId(e.target.value)}
-                                  className="w-full bg-white border border-[#D8B4FE] rounded-xl px-3 py-2 font-extrabold text-slate-900"
-                                >
-                                  {pendingEvaluations.length > 0 ? (
-                                    pendingEvaluations.map(e => (
-                                      <option key={e.id} value={e.id}>{e.name} (Pendiente)</option>
-                                    ))
-                                  ) : (
-                                    activeCourse.evaluations.map(e => (
-                                      <option key={e.id} value={e.id}>{e.name}</option>
-                                    ))
-                                  )}
-                                </select>
-                              </div>
-
-                              <div>
-                                <label className="font-bold text-slate-600 block mb-1">Quiero calcular...</label>
-                                <select
-                                  value={simTargetType}
-                                  onChange={(e) => setSimTargetType(e.target.value)}
-                                  className="w-full bg-white border border-[#D8B4FE] rounded-xl px-3 py-2 font-extrabold text-slate-900"
-                                >
-                                  <option value="next">Otra nota pendiente</option>
-                                  <option value="global">Certamen Global</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              {simulationRows.map((row, idx) => (
-                                <div key={idx} className="bg-white p-3.5 rounded-2xl border border-[#F3E8FF] flex items-center justify-between gap-3">
-                                  <div className="font-black text-xl text-purple-900 w-12">{row.sourceGrade}</div>
-                                  <div className="font-extrabold text-sm text-slate-800 flex-1">
-                                    Necesitas <strong className="text-purple-700 text-lg font-black">{row.needed.toFixed(1)}</strong> para obtener 55.0
-                                  </div>
-                                  <button
-                                    onClick={() => {
-                                      if (simSourceEvId) {
-                                        updateEvaluation(activeCourse.id, simSourceEvId, 'grade', row.sourceGrade);
-                                      }
-                                    }}
-                                    className="px-4 py-1.5 bg-[#E9D5FF] hover:bg-[#D8B4FE] text-purple-950 font-black text-xs rounded-xl transition-colors"
-                                  >
-                                    Probar →
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                        </div>
-
-                        {/* COLUMNA DERECHA (CARDS FIEL A LA IMAGEN) */}
-                        <div className="space-y-4">
-                          
-                          {/* CARD 1: LAS CONDICIONES DE TU RAMO */}
-                          <div className="bg-white rounded-3xl p-5 border border-[#E2E4DC] shadow-2xs space-y-3">
-                            <h3 className="font-black text-base text-slate-900">Las condiciones de tu ramo</h3>
-                            
-                            <div className="space-y-2.5">
-                              {activeCalc.conditions.map((cond, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 last:border-none">
-                                  <div className="flex items-center gap-2 font-bold text-slate-700">
-                                    <span className={`w-2.5 h-2.5 rounded-full ${cond.passed ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                                    <span>{cond.text}</span>
-                                  </div>
-                                  <span className={`px-2.5 py-0.5 rounded-full font-black text-[10px] ${
-                                    cond.passed
-                                      ? 'bg-emerald-100 text-emerald-900'
-                                      : cond.label === 'Incumplida ✕'
-                                      ? 'bg-rose-100 text-rose-900'
-                                      : 'bg-slate-100 text-slate-600'
-                                  }`}>
-                                    {cond.label}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* CARD 2: ✦ GLOBAL */}
-                          <div className="bg-white rounded-3xl p-5 border border-[#E2E4DC] shadow-2xs space-y-3">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-black text-base text-slate-900 flex items-center gap-1.5">
-                                <span className="text-amber-500">✦</span> Global
-                              </h3>
-                            </div>
-
-                            <span className="inline-block px-3 py-1 bg-[#FEF3C7] text-[#854D0E] font-extrabold text-[11px] rounded-lg">
-                              {activeCourse.extraConfig?.globalGrade ? 'Rendido' : 'Situación aún por definir'}
-                            </span>
-
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                              Voluntario. Reemplaza el peor certamen incluso si baja tu nota. No requiere un mínimo de presentación.
-                            </p>
-
-                            <div className="space-y-1">
-                              <label className="text-[11px] font-extrabold text-slate-500 block">Nota de global</label>
-                              <div className="flex items-center justify-between border border-[#E2E4DC] rounded-xl px-3 py-2 bg-white">
-                                <input
-                                  type="number"
-                                  min="0" max="100"
-                                  placeholder="—"
-                                  value={activeCourse.extraConfig?.globalGrade || ''}
-                                  onFocus={(e) => e.target.select()}
-                                  onChange={(e) => updateGlobalGrade(activeCourse.id, e.target.value)}
-                                  className="w-20 font-black text-lg text-slate-900 focus:outline-none"
-                                />
-                                <span className="text-xs font-bold text-slate-400">/100</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* CARD 3: TU META, CON CONTEXTO */}
-                          <div className="bg-[#FAF9F5] rounded-3xl p-5 border border-[#E2E4DC] space-y-1">
-                            <h4 className="font-black text-sm text-slate-900">Tu meta, con contexto.</h4>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                              Un promedio alto no siempre basta. Rumbo revisa también los requisitos específicos de este ramo.
-                            </p>
-                          </div>
-
-                        </div>
-
-                      </div>
-                    </>
-                  ) : (
-                    <div className="bg-white rounded-3xl p-10 text-center border border-[#E2E4DC]">
-                      <h3 className="text-lg font-black text-slate-900">No hay asignaturas en este semestre</h3>
-                      <button
-                        onClick={() => setShowAddCourseToSemModal(activeSemesterId)}
-                        className="mt-4 px-4 py-2 bg-[#0D473B] text-white font-extrabold text-xs rounded-xl"
-                      >
-                        + Añadir Ramo
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB: CALENDARIO DE EVALUACIONES */}
-              {activeTab === 'calendar' && (
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-2xl font-black text-slate-900">📅 Calendario de Evaluaciones 2026</h2>
-                      <p className="text-xs text-slate-500">Haz clic en cualquier casillero para ver o añadir eventos.</p>
-                    </div>
-
-                    <button
-                      onClick={() => setShowAddEventModal(true)}
-                      className="px-4 py-2.5 bg-[#0D473B] text-white font-extrabold text-xs rounded-2xl shadow-xs"
-                    >
-                      + Añadir Fecha / Evento
-                    </button>
-                  </div>
-
-                  <div className="bg-white rounded-3xl border border-[#E2E4DC] p-6 space-y-4">
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-black text-slate-400 uppercase tracking-wider">
-                      <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-2">
-                      {calendarGridDays.map((cell, idx) => {
-                        if (!cell.isCurrentMonth) {
-                          return <div key={idx} className="min-h-[85px] bg-[#FAF9F5]/40 rounded-2xl border border-transparent"></div>;
-                        }
-
-                        const hasEvents = cell.events && cell.events.length > 0;
-
-                        return (
-                          <div
-                            key={idx}
-                            onClick={() => setSelectedDayCell(cell)}
-                            className={`min-h-[90px] p-2 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                              hasEvents
-                                ? 'bg-white border-[#0D473B] shadow-2xs'
-                                : 'bg-white border-[#E2E4DC] hover:border-slate-400'
-                            }`}
-                          >
-                            <span className="text-xs font-extrabold text-slate-700">{cell.dayNumber}</span>
-                            
-                            <div className="space-y-1 my-1 overflow-y-auto max-h-[55px]">
-                              {cell.events?.map(ev => (
-                                <div
-                                  key={ev.id}
-                                  className="px-1.5 py-0.5 rounded text-[9px] font-black truncate text-white"
-                                  style={{ backgroundColor: ev.pastelBg || '#0D473B' }}
-                                >
-                                  {ev.courseCode} · {ev.title}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: HORARIOS DE CONSULTA DMAT */}
-              {activeTab === 'office_hours' && (
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-2xl font-black text-slate-900">👨‍🏫 Horarios de Consulta DMat</h2>
-                      <p className="text-xs text-slate-500">Atención presencial de los 49 profesores del Departamento de Matemática (Campus San Joaquín 2026-2).</p>
-                    </div>
-
-                    <input
-                      type="text"
-                      placeholder="Buscar por profesor u oficina (ej. A-157)..."
-                      value={profSearchTerm}
-                      onChange={(e) => setProfSearchTerm(e.target.value)}
-                      className="w-full sm:w-72 bg-white border border-[#E2E4DC] rounded-2xl px-4 py-2 font-bold text-xs text-slate-900"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredProfessors.map(prof => (
-                      <div key={prof.id} className="bg-white rounded-3xl p-5 border border-[#E2E4DC] space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-extrabold text-sm text-[#0D473B]">{prof.name}</h3>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900">
-                            {prof.office}
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-600 font-medium">⏰ {prof.hours}</div>
-                        <div className="text-xs text-slate-500">📧 {prof.email}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: BIBLIOTECA DE SEMESTRES */}
-              {activeTab === 'library' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-black text-slate-900">📚 Biblioteca de Semestres</h2>
-                      <p className="text-xs text-slate-500">PPA Semestral y PPA Acumulado Global.</p>
-                    </div>
-
-                    <button
-                      onClick={() => setShowAddSemesterModal(true)}
-                      className="px-4 py-2 bg-[#0D473B] text-white font-extrabold text-xs rounded-2xl"
-                    >
-                      + Crear Nuevo Semestre
-                    </button>
-                  </div>
-
-                  <div className="bg-[#0D473B] text-white rounded-3xl p-6 flex justify-between items-center shadow-md">
-                    <div>
-                      <span className="text-xs font-bold opacity-80 uppercase">PPA Acumulado Global</span>
-                      <div className="text-4xl font-black">{globalPPA.toFixed(2)}</div>
-                    </div>
-                    <div className="text-xs font-bold opacity-80">{semesters.length} semestres creados</div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {semesters.map(sem => (
-                      <div key={sem.id} className="bg-white rounded-3xl p-6 border border-[#E2E4DC] space-y-3">
-                        <div className="flex items-center justify-between border-b border-[#E2E4DC] pb-3">
-                          <h3 className="font-black text-lg text-slate-900">{sem.name}</h3>
-                          <button
-                            onClick={() => handleDeleteSemester(sem.id)}
-                            className="text-xs text-rose-600 font-bold hover:underline"
-                          >
-                            Borrar Semestre
-                          </button>
-                        </div>
-
-                        <div className="space-y-2">
-                          {sem.courses.map(c => {
-                            const res = calculateCourse(c);
-                            return (
-                              <div key={c.id} className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F5] border border-[#E2E4DC]">
-                                <span className="font-bold text-xs">{c.name} ({c.code})</span>
-                                <span className="font-black text-xs text-[#0D473B]">{res.finalGrade.toFixed(1)}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: PANEL DE ADMINISTRADOR (MODO ADMIN) */}
-              {activeTab === 'admin' && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900">⚙️ Panel de Administración Rumbo</h2>
-                    <p className="text-xs text-slate-500">Agrega, modifica y gestiona asignaturas del catálogo sin tocar una sola línea de código.</p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => setShowCustomCourseModal(true)}
-                      className="px-4 py-2.5 bg-[#0D473B] text-white font-extrabold text-xs rounded-2xl"
-                    >
-                      + Crear Ramo Manualmente
-                    </button>
-
-                    <button
-                      onClick={() => setShowAutoParserModal(true)}
-                      className="px-4 py-2.5 bg-purple-900 text-white font-extrabold text-xs rounded-2xl flex items-center gap-2"
-                    >
-                      <span>🤖 Creador Automático por Documento / Pauta</span>
-                    </button>
-                  </div>
-
-                  <div className="bg-white rounded-3xl p-6 border border-[#E2E4DC] space-y-4">
-                    <h3 className="font-black text-base text-slate-900">Catálogo de Ramos Disponibles ({catalog.length})</h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {catalog.map(preset => (
-                        <div key={preset.code} className="p-4 rounded-2xl border border-[#E2E4DC] bg-[#FAF9F5] flex items-center justify-between">
-                          <div>
-                            <span className="font-mono font-black text-xs text-[#0D473B]">{preset.code}</span>
-                            <h4 className="font-extrabold text-xs text-slate-900">{preset.name}</h4>
-                            <span className="text-[10px] text-slate-400">{preset.credits} SCT</span>
-                          </div>
-
-                          <button
-                            onClick={() => handleDeleteCatalogCourse(preset.code)}
-                            className="px-3 py-1 bg-rose-100 text-rose-900 font-bold text-xs rounded-xl hover:bg-rose-200"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </main>
-
+              <div id="simulatorRowsContainer"></div>
+            </div>
           </div>
 
-          {/* MODAL: AÑADIR FECHA / EVENTO CON SELECTOR DE RAMO + OPTION "PERSONAL" NEGRO */}
-          {showAddEventModal && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 border border-[#E2E4DC]">
-                <h3 className="font-black text-lg text-slate-900">Añadir Fecha / Evento</h3>
-
-                <form onSubmit={handleAddEvent} className="space-y-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Título</label>
-                    <input
-                      type="text" required placeholder="Ej: Entrega Tarea 2"
-                      value={eventTitle} onChange={e => setEventTitle(e.target.value)}
-                      className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold"
-                    />
+          <!-- Columna Derecha -->
+          <div>
+            <div class="condition-card">
+              <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-main);">Las condiciones de tu ramo</h3>
+              ${calc.conditions.map(cond => `
+                <div class="condition-item">
+                  <div class="condition-text">
+                    <span style="font-size: 1.2rem;">${cond.passed ? '🟢' : '⚪'}</span>
+                    ${cond.text}
                   </div>
+                  <span class="condition-tag ${cond.passed ? 'tag-passed' : 'tag-pending'}">${cond.label}</span>
+                </div>
+              `).join('')}
+            </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">Fecha</label>
-                      <input
-                        type="date" required value={eventDate} onChange={e => setEventDate(e.target.value)}
-                        className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">Sigla Ramo</label>
-                      <select
-                        value={eventCourseCode}
-                        onChange={e => setEventCourseCode(e.target.value)}
-                        className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-extrabold text-slate-900"
-                      >
-                        <option value="">Elegir ramo...</option>
-                        {currentSemester?.courses.map(c => (
-                          <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
-                        ))}
-                        <option value="PERSONAL">Personal (Color negro)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-3">
-                    <button type="button" onClick={() => setShowAddEventModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
-                    <button type="submit" className="px-4 py-2 bg-[#0D473B] text-white font-extrabold rounded-xl">Guardar Fecha</button>
-                  </div>
-                </form>
+            <div class="global-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.4rem;">✦ Global</h3>
+              </div>
+              <span class="global-tag">${globalGradeVal ? 'Rendido' : 'Situación aún por definir'}</span>
+              <p class="global-desc">Voluntario. Reemplaza el peor certamen incluso si baja tu nota. No requiere un mínimo de presentación.</p>
+              
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:0.8rem; color:var(--text-muted);">Nota de global</label>
+                <div class="global-input-box">
+                  <input type="number" class="global-input" placeholder="—" value="${globalGradeVal}" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', 'global', this.value)">
+                  <span style="font-weight:700; color:var(--text-muted); font-size:0.9rem;">/100</span>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* MODAL: CREADOR AUTOMÁTICO DE RAMOS POR PAUTA */}
-          {showAutoParserModal && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 border border-[#E2E4DC]">
+            <div class="meta-card">
+              <div class="meta-title">Tu meta, con contexto.</div>
+              <div class="meta-desc">Un promedio alto no siempre basta. Rumbo revisa también los requisitos específicos de este ramo.</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      renderSimulatorRows(courseId);
+    }
+
+    function getCourseGroupedEvals(courseId) {
+      return [
+        {
+          groupName: 'Certámenes (75%)',
+          items: [
+            { id: 'c1', name: 'Certamen 1 (C1)', weight: '25%' },
+            { id: 'c2', name: 'Certamen 2 (C2)', weight: '25%' },
+            { id: 'c3', name: 'Certamen 3 (C3)', weight: '25%' }
+          ]
+        },
+        {
+          groupName: 'Controles de Lectura y Taller (25%)',
+          items: [
+            { id: 'q1', name: 'Control 1 (Q1)', weight: '4.16%' },
+            { id: 'q2', name: 'Control 2 (Q2)', weight: '4.16%' },
+            { id: 'q3', name: 'Control 3 (Q3)', weight: '4.16%' },
+            { id: 'q4', name: 'Control 4 (Q4)', weight: '4.16%' },
+            { id: 'q5', name: 'Control 5 (Q5)', weight: '4.16%' },
+            { id: 'q6', name: 'Control 6 (Q6)', weight: '4.16%' }
+          ]
+        }
+      ];
+    }
+
+    function renderGroupedTables(courseId, groups) {
+      return groups.map(g => `
+        <div class="eval-group-header">
+          <span>${g.groupName}</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Evaluación</th>
+              <th>Ponderación</th>
+              <th>Nota (0 - 100)</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${g.items.map(item => {
+              const val = state.grades[courseId]?.[item.id] || '';
+              const dateVal = state.dates[courseId]?.[item.id] || '';
+
+              return `
+                <tr>
+                  <td style="font-weight: 700;">${item.name}</td>
+                  <td style="color: var(--text-muted);">${item.weight}</td>
+                  <td>
+                    <input type="number" class="input-grade" value="${val}" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', '${item.id}', this.value)">
+                  </td>
+                  <td>
+                    <input type="date" class="input-date" value="${dateVal}" onchange="updateDate('${courseId}', '${item.id}', this.value)">
+                    ${dateVal ? `<button class="btn-delete-date" onclick="updateDate('${courseId}', '${item.id}', '')">✕</button>` : ''}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `).join('');
+    }
+
+    function renderSimulatorRows(courseId) {
+      const container = document.getElementById('simulatorRowsContainer');
+      if(!container) return;
+
+      const calc = calculateCourseGrade(courseId);
+
+      container.innerHTML = [20, 40, 60, 80, 100].map(val => `
+        <div class="sim-row">
+          <div class="sim-grade">${val}</div>
+          <div class="sim-needed">
+            ${calc.required <= 0 ? '¡Ya apruebas el ramo!' : `Necesitas ${Math.max(0, calc.required).toFixed(1)} para obtener 55.0`}
+          </div>
+          <button class="btn-try" onclick="applySimGrade('${courseId}', 'c3', ${val})">Probar →</button>
+        </div>
+      `).join('');
+    }
+
+    function updateGrade(courseId, evalId, value) {
+      if(!state.grades[courseId]) state.grades[courseId] = {};
+      let cleanVal = value;
+      if(cleanVal !== '' && !isNaN(cleanVal)) {
+        cleanVal = String(parseFloat(cleanVal));
+      }
+      state.grades[courseId][evalId] = cleanVal;
+      saveState();
+      navigate(courseId);
+    }
+
+    function updateDate(courseId, evalId, value) {
+      if(!state.dates[courseId]) state.dates[courseId] = {};
+      state.dates[courseId][evalId] = value;
+      saveState();
+      navigate(courseId);
+    }
+
+    function applySimGrade(courseId, evalId, val) {
+      updateGrade(courseId, evalId, val);
+    }
+
+    // PANEL ADMINISTRADOR Y CREADOR AUTOMÁTICO DE RAMOS POR ARCHIVO (PDF/TXT)
+    function renderAdminPanel(container) {
+      container.innerHTML = `
+        <div class="card">
+          <h2 style="font-weight:800; margin-bottom:0.5rem;">⚙️ Panel de Administración Rumbo</h2>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Añade, modifica y elimina asignaturas del catálogo sin tocar código.</p>
+
+          <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+            <button class="btn-primary" onclick="openCreateCourseModal()">+ Crear Ramo Manualmente</button>
+            <button class="btn-secondary" onclick="openAutoParserModal()">🤖 Creador Automático por Documento / Pauta (PDF)</button>
+          </div>
+
+          <h3 style="font-weight:800; margin-bottom:1rem;">Catálogo de Ramos Actuales</h3>
+          <div id="adminCatalogList">
+            ${state.catalog.map((c, idx) => `
+              <div class="prof-card">
                 <div>
-                  <h3 className="font-black text-lg text-slate-900">🤖 Creador Automático por Documento / Pauta</h3>
-                  <p className="text-xs text-slate-500">Pega el texto del syllabus o cronograma para generar la asignatura en el catálogo.</p>
+                  <span class="course-badge ${c.bg}">${c.id}</span>
+                  <span style="font-weight:700; margin-left:0.5rem;">${c.name}</span>
+                  <div class="prof-meta" style="margin-top:0.2rem;">${c.sct} SCT · Color: <span style="display:inline-block; width:12px; height:12px; background:${c.hex}; border-radius:3px;"></span></div>
                 </div>
+                <div>
+                  <button class="btn-danger" onclick="deleteCatalogCourse(${idx})">Eliminar Ramo</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
 
-                <form onSubmit={handleAutoParsePauta} className="space-y-3 text-xs">
-                  <textarea
-                    required
-                    placeholder="Ejemplo:
+    function openCreateCourseModal() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom:1.5rem;">Crear Nuevo Ramo en el Catálogo</h2>
+        <div class="form-group">
+          <label class="form-label">Sigla Ramo (Ej: FIS120)</label>
+          <input type="text" class="form-input" id="newCourseSigla" placeholder="FIS120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre de la Asignatura</label>
+          <input type="text" class="form-input" id="newCourseName" placeholder="Física Electromagnetismo">
+        </div>
+        <div style="display:flex; gap:1rem;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Créditos SCT</label>
+            <input type="number" class="form-input" id="newCourseSct" value="6">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Color Distintivo (Hex)</label>
+            <input type="color" class="form-input" id="newCourseHex" value="#2563EB" style="height:45px;">
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="saveNewCourse()">Guardar en Catálogo</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function saveNewCourse() {
+      const sigla = document.getElementById('newCourseSigla').value.toUpperCase().trim();
+      const name = document.getElementById('newCourseName').value.trim();
+      const sct = parseInt(document.getElementById('newCourseSct').value) || 6;
+      const hex = document.getElementById('newCourseHex').value;
+
+      if(!sigla || !name) return alert('Por favor ingresa la sigla y el nombre del ramo.');
+
+      state.catalog.push({
+        id: sigla,
+        name: name,
+        sct: sct,
+        bg: 'bg-mat071',
+        hex: hex
+      });
+
+      saveState();
+      closeModal();
+      navigate('admin');
+    }
+
+    function deleteCatalogCourse(idx) {
+      if(confirm('¿Seguro que deseas eliminar esta asignatura del catálogo?')) {
+        state.catalog.splice(idx, 1);
+        saveState();
+        navigate('admin');
+      }
+    }
+
+    // CREADOR AUTOMÁTICO POR DOCUMENTO / PAUTA (PDF & TXT)
+    function openAutoParserModal() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom:1rem;">🤖 Creador Automático por Documento / Pauta</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">Sube un archivo PDF o TXT con el syllabus o copia directamente el texto de la pauta.</p>
+
+        <div class="file-drop-area" onclick="document.getElementById('pautaFileInput').click()">
+          <span style="font-size:2rem; display:block; margin-bottom:0.5rem;">📄</span>
+          <strong style="color:var(--usm-green);">Haz clic para subir tu PDF o TXT</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">Extracción inteligente automática de evaluaciones</div>
+          <input type="file" id="pautaFileInput" accept=".pdf,.txt" style="display:none;" onchange="handleFileUpload(this.files)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Texto Extraído del Documento / Pauta</label>
+          <textarea class="form-textarea" id="pautaText" placeholder="Ejemplo:
 Asignatura: FIS120 Física Electromagnetismo (6 SCT)
 Evaluaciones:
 - Certamen 1 (25%)
 - Certamen 2 (25%)
 - Certamen 3 (25%)
-- Controles (25%)"
-                    value={pautaInputText}
-                    onChange={e => setPautaInputText(e.target.value)}
-                    className="w-full h-36 bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl p-3 font-mono text-xs focus:outline-none"
-                  ></textarea>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setShowAutoParserModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
-                    <button type="submit" className="px-4 py-2 bg-purple-900 text-white font-extrabold rounded-xl">Procesar y Crear</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* MODAL: SELECCIONAR RAMO PARA SEMESTRE */}
-          {showAddCourseToSemModal && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto border border-[#E2E4DC]">
-                <div className="flex items-center justify-between border-b border-[#E2E4DC] pb-3">
-                  <h3 className="font-black text-base text-slate-900">Añadir Ramo a Semestre</h3>
-                  <button onClick={() => setShowAddCourseToSemModal(null)} className="font-bold text-slate-400">✕</button>
-                </div>
-
-                <input
-                  type="text"
-                  placeholder="Buscar ramo en catálogo..."
-                  value={catalogSearchTerm}
-                  onChange={e => setCatalogSearchTerm(e.target.value)}
-                  className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold text-xs"
-                />
-
-                <div className="space-y-2">
-                  {filteredCatalog.map(preset => (
-                    <div key={preset.code} className="p-3 rounded-2xl border border-[#E2E4DC] flex items-center justify-between">
-                      <div>
-                        <h4 className="font-extrabold text-xs text-slate-900">{preset.fullName} ({preset.code})</h4>
-                        <span className="text-[10px] text-slate-400">{preset.credits} SCT</span>
-                      </div>
-                      <button
-                        onClick={() => handleAddCourseToSemester(showAddCourseToSemModal, preset)}
-                        className="px-3 py-1 bg-[#0D473B] text-white font-extrabold text-xs rounded-xl"
-                      >
-                        + Añadir
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* MODAL: DETALLE DÍA CALENDARIO */}
-          {selectedDayCell && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 border border-[#E2E4DC]">
-                <div className="flex items-center justify-between border-b border-[#E2E4DC] pb-3">
-                  <h3 className="font-black text-base text-slate-900">Eventos del {selectedDayCell.dayNumber} de {MONTH_NAMES[currentMonthIdx]}</h3>
-                  <button onClick={() => setSelectedDayCell(null)} className="font-bold text-slate-400">✕</button>
-                </div>
-
-                <div className="space-y-2">
-                  {selectedDayCell.events?.length === 0 ? (
-                    <div className="text-center py-4 text-xs text-slate-400">Sin eventos en este día.</div>
-                  ) : (
-                    selectedDayCell.events?.map(ev => (
-                      <div key={ev.id} className="p-3 rounded-2xl border border-[#E2E4DC] bg-[#FAF9F5] flex items-center justify-between">
-                        <div>
-                          <h4 className="font-extrabold text-xs text-slate-900">{ev.title}</h4>
-                          <span className="text-[10px] text-slate-500">{ev.courseCode}</span>
-                        </div>
-                        <button onClick={() => handleDeleteCalendarEvent(ev)} className="text-slate-400 hover:text-rose-600 font-bold">🗑️</button>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <button onClick={() => setSelectedDayCell(null)} className="w-full py-2 bg-[#0D473B] text-white font-extrabold text-xs rounded-xl">Cerrar</button>
-              </div>
-            </div>
-          )}
-
-          {/* MODAL: VER REGLAS DE RAMO */}
-          {showRuleModal && activeCourse && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 border border-[#E2E4DC]">
-                <div className="flex items-center justify-between border-b border-[#E2E4DC] pb-3">
-                  <h3 className="font-black text-base text-slate-900">Reglas de {activeCourse.code}</h3>
-                  <button onClick={() => setShowRuleModal(false)} className="font-bold text-slate-400">✕</button>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="p-3 bg-[#FAF9F5] rounded-xl border border-[#E2E4DC] font-mono font-bold text-[#0D473B]">
-                    {activeCourse.rules?.formula}
-                  </div>
-                  <ul className="space-y-1.5 text-slate-600">
-                    {activeCourse.rules?.details?.map((item, idx) => (
-                      <li key={idx}>• {item}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button onClick={() => setShowRuleModal(false)} className="w-full py-2.5 bg-[#0D473B] text-white font-extrabold text-xs rounded-xl">Entendido</button>
-              </div>
-            </div>
-          )}
-
-          {/* MODAL: CREAR RAMO EN ADMINISTRADOR */}
-          {showCustomCourseModal && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 border border-[#E2E4DC]">
-                <h3 className="font-black text-lg text-slate-900">Crear Ramo en Catálogo</h3>
-
-                <form onSubmit={handleCreateCatalogCourse} className="space-y-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Nombre</label>
-                    <input type="text" required placeholder="Ej: Electromagnetismo" value={customName} onChange={e => setCustomName(e.target.value)} className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">Sigla</label>
-                      <input type="text" placeholder="FIS120" value={customCode} onChange={e => setCustomCode(e.target.value)} className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold" />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">SCT</label>
-                      <input type="number" min="1" max="20" value={customCredits} onChange={e => setCustomCredits(e.target.value)} className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold" />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setShowCustomCourseModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
-                    <button type="submit" className="px-4 py-2 bg-[#0D473B] text-white font-extrabold rounded-xl">Crear en Catálogo</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* MODAL: CREAR SEMESTRE */}
-          {showAddSemesterModal && (
-            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 border border-[#E2E4DC]">
-                <h3 className="font-black text-lg text-slate-900">Crear Semestre</h3>
-                <form onSubmit={handleCreateSemester} className="space-y-3 text-xs">
-                  <input type="text" required placeholder="Ej: 2027 · 1°" value={newSemName} onChange={e => setNewSemName(e.target.value)} className="w-full bg-[#FAF9F5] border border-[#E2E4DC] rounded-xl px-3 py-2 font-bold" />
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setShowAddSemesterModal(false)} className="px-4 py-2 font-bold text-slate-400">Cancelar</button>
-                    <button type="submit" className="px-4 py-2 bg-[#0D473B] text-white font-extrabold rounded-xl">Crear</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
+- Controles (25%)"></textarea>
         </div>
-      );
+
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="parseAndCreateCourse()">Procesar y Crear Ramo</button>
+        </div>
+      `;
+      modal.classList.add('open');
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    function handleFileUpload(files) {
+      if(!files || files.length === 0) return;
+      const file = files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const text = e.target.result;
+        document.getElementById('pautaText').value = text;
+      };
+
+      reader.readAsText(file);
+    }
+
+    function parseAndCreateCourse() {
+      const text = document.getElementById('pautaText').value;
+      if(!text.trim()) return alert('Sube un archivo o pega el texto de la pauta.');
+
+      const siglaMatch = text.match(/([A-Z]{3}-?\d{3})/i);
+      const sigla = siglaMatch ? siglaMatch[1].replace('-', '').toUpperCase() : `RAMO${Math.floor(Math.random()*1000)}`;
+
+      const nameMatch = text.match(/Asignatura:\s*([^\n]+)/i) || text.match(/Curso:\s*([^\n]+)/i);
+      const name = nameMatch ? nameMatch[1].trim() : `Asignatura ${sigla}`;
+
+      state.catalog.push({
+        id: sigla,
+        name: name,
+        sct: 6,
+        bg: 'bg-mat070',
+        hex: '#0D473B'
+      });
+
+      saveState();
+      closeModal();
+      alert(`¡Ramo ${sigla} CREADO CON ÉXITO! Ya está disponible en tu catálogo.`);
+      navigate('admin');
+    }
+
+    // CALENDAR VIEW
+    function renderCalendar(container) {
+      container.innerHTML = `
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-weight: 800;">📅 Calendario de Evaluaciones 2026</h2>
+            <button class="btn-primary" onclick="openAddEventModal()">+ Añadir Fecha / Evento</button>
+          </div>
+          <div class="calendar-grid">
+            <div class="cal-day-header">LUN</div><div class="cal-day-header">MAR</div><div class="cal-day-header">MIÉ</div>
+            <div class="cal-day-header">JUE</div><div class="cal-day-header">VIE</div><div class="cal-day-header">SÁB</div><div class="cal-day-header">DOM</div>
+            ${renderCalCells()}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCalCells() {
+      let cells = '';
+      const courses = state.semesters[state.currentSemester]?.courses || [];
+
+      for(let day = 1; day <= 31; day++) {
+        const dayStr = `2026-10-${day < 10 ? '0'+day : day}`;
+        
+        let eventsHTML = '';
+        courses.forEach(c => {
+          const cDates = state.dates[c.id] || {};
+          Object.keys(cDates).forEach(evKey => {
+            if(cDates[evKey] === dayStr) {
+              eventsHTML += `<div class="cal-event-tag ${c.bg}">${c.id} · ${evKey.toUpperCase()}</div>`;
+            }
+          });
+        });
+
+        state.customEvents.filter(e => e.date === dayStr).forEach(e => {
+          const bgClass = e.courseId === 'PERSONAL' ? 'bg-personal' : (courses.find(c=>c.id===e.courseId)?.bg || 'bg-personal');
+          eventsHTML += `<div class="cal-event-tag ${bgClass}">${e.title}</div>`;
+        });
+
+        cells += `
+          <div class="cal-day-cell" onclick="openDayModal('${dayStr}', ${day})">
+            <div class="cal-day-num">${day}</div>
+            ${eventsHTML}
+          </div>
+        `;
+      }
+      return cells;
+    }
+
+    function openDayModal(dateStr, dayNum) {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      const courses = state.semesters[state.currentSemester]?.courses || [];
+      let evList = [];
+
+      courses.forEach(c => {
+        const cDates = state.dates[c.id] || {};
+        Object.keys(cDates).forEach(evKey => {
+          if(cDates[evKey] === dateStr) {
+            evList.push({ type: 'course', courseId: c.id, name: `${c.name} - ${evKey.toUpperCase()}`, evKey });
+          }
+        });
+      });
+
+      state.customEvents.filter(e => e.date === dateStr).forEach((e, idx) => {
+        evList.push({ type: 'custom', name: e.title, courseId: e.courseId, idx });
+      });
+
+      body.innerHTML = `
+        <h2 style="margin-bottom: 1rem;">Evaluaciones del Octubre ${dayNum}, 2026</h2>
+        <div style="margin-bottom: 1.5rem;">
+          ${evList.length > 0 ? evList.map(item => `
+            <div class="prof-card">
+              <div>
+                <div class="prof-name">${item.name}</div>
+                <div class="prof-meta">${item.courseId}</div>
+              </div>
+              <button style="background:none; border:none; cursor:pointer;" onclick="deleteEvent('${item.type}', '${item.courseId}', '${item.evKey}', ${item.idx})">🗑️</button>
+            </div>
+          `).join('') : '<p style="color: var(--text-muted);">No hay evaluaciones en esta fecha.</p>'}
+        </div>
+        <div style="display:flex; gap:1rem;">
+          <button class="btn-primary" onclick="openAddEventModal('${dateStr}')">+ Añadir a esta fecha</button>
+          <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function openAddEventModal(defaultDate = '') {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      const courses = state.semesters[state.currentSemester]?.courses || [];
+
+      body.innerHTML = `
+        <h2 style="margin-bottom: 1.5rem;">Añadir Fecha / Evento</h2>
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input type="text" class="form-input" id="eventTitle" placeholder="Ej: Entrega Tarea 2">
+        </div>
+        <div style="display:flex; gap:1rem;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Fecha</label>
+            <input type="date" class="form-input" id="eventDate" value="${defaultDate || '2026-10-15'}">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Sigla Ramo</label>
+            <select class="form-select" id="eventCourse">
+              ${courses.map(c => `<option value="${c.id}">${c.id} - ${c.name}</option>`).join('')}
+              <option value="PERSONAL">Personal (General)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="saveCustomEvent()">Guardar Fecha</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function saveCustomEvent() {
+      const title = document.getElementById('eventTitle').value;
+      const date = document.getElementById('eventDate').value;
+      const courseId = document.getElementById('eventCourse').value;
+
+      if(!title || !date) return alert('Ingresa un título y fecha válidos');
+
+      state.customEvents.push({ title, date, courseId });
+      saveState();
+      closeModal();
+      navigate('calendar');
+    }
+
+    function deleteEvent(type, courseId, evKey, idx) {
+      if(type === 'course') {
+        updateDate(courseId, evKey, '');
+      } else {
+        state.customEvents.splice(idx, 1);
+        saveState();
+      }
+      closeModal();
+      navigate('calendar');
+    }
+
+    // CATALOG & LIBRARY MODAL
+    function openCatalogModal() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom: 1rem;">Elegir del catálogo preconfigurado</h2>
+        <input type="text" class="search-bar" placeholder="Buscar por sigla o nombre..." onkeyup="filterCatalog(this.value)">
+        <div id="catalogListContainer">
+          ${renderCatalogItems(state.catalog)}
+        </div>
+        <div style="margin-top:1.5rem; text-align:right;">
+          <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function renderCatalogItems(list) {
+      const currentCourses = state.semesters[state.currentSemester]?.courses || [];
+      return list.map(c => {
+        const added = currentCourses.some(item => item.id === c.id);
+        return `
+          <div class="prof-card">
+            <div>
+              <span class="course-badge ${c.bg}">${c.id}</span>
+              <div class="prof-name" style="margin-top:0.3rem;">${c.name}</div>
+              <div class="prof-meta">${c.sct} SCT</div>
+            </div>
+            <button class="${added ? 'btn-secondary' : 'btn-primary'}" ${added ? 'disabled' : ''} onclick="addCourseToCurrent('${c.id}')">
+              ${added ? 'Añadido' : '+ Agregar'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterCatalog(query) {
+      const filtered = state.catalog.filter(c => c.id.toLowerCase().includes(query.toLowerCase()) || c.name.toLowerCase().includes(query.toLowerCase()));
+      document.getElementById('catalogListContainer').innerHTML = renderCatalogItems(filtered);
+    }
+
+    function addCourseToCurrent(courseId) {
+      const item = state.catalog.find(c => c.id === courseId);
+      if(item) {
+        state.semesters[state.currentSemester].courses.push(item);
+        saveState();
+        closeModal();
+        renderSidebar();
+        navigate(courseId);
+      }
+    }
+
+    // LIBRARY VIEW
+    function renderLibrary(container) {
+      container.innerHTML = `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 style="font-weight:800;">📚 Biblioteca de Semestres</h2>
+            <button class="btn-primary" onclick="createNewSemester()">+ Crear Nuevo Semestre</button>
+          </div>
+          <div>
+            ${Object.keys(state.semesters).map(semKey => `
+              <div class="card" style="background:#FAF9F5;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3>${state.semesters[semKey].name}</h3>
+                  <button class="btn-secondary" style="font-size:0.8rem; padding:0.4rem 0.8rem;" onclick="deleteSemester('${semKey}')">🗑️ Borrar Semestre</button>
+                </div>
+                <div style="margin-top:1rem;">
+                  ${state.semesters[semKey].courses.map(c => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border-color);">
+                      <span><strong>${c.id}</strong> - ${c.name}</span>
+                      <button style="background:none; border:none; cursor:pointer;" onclick="removeCourseFromSem('${semKey}', '${c.id}')">🗑️</button>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function createNewSemester() {
+      const name = prompt('Nombre del semestre (Ej: 2027 - 1° Semestre):');
+      if(name) {
+        const key = `sem_${Date.now()}`;
+        state.semesters[key] = { name, courses: [] };
+        state.currentSemester = key;
+        saveState();
+        renderSemesterSelect();
+        navigate('library');
+      }
+    }
+
+    function deleteSemester(semKey) {
+      if(Object.keys(state.semesters).length <= 1) return alert('Debes mantener al menos un semestre.');
+      delete state.semesters[semKey];
+      state.currentSemester = Object.keys(state.semesters)[0];
+      saveState();
+      renderSemesterSelect();
+      navigate('library');
+    }
+
+    function removeCourseFromSem(semKey, courseId) {
+      state.semesters[semKey].courses = state.semesters[semKey].courses.filter(c => c.id !== courseId);
+      saveState();
+      navigate('library');
+    }
+
+    // PROFS VIEW
+    function renderProfs(container) {
+      container.innerHTML = `
+        <div class="card">
+          <h2 style="margin-bottom: 0.5rem; font-weight: 800;">👨‍🏫 Horarios de Consulta DMat</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Departamento de Matemática · Campus San Joaquín (2026-2)</p>
+          <input type="text" class="search-bar" placeholder="Buscar por profesor u oficina (ej. A-157)..." onkeyup="filterProfs(this.value)">
+          <div id="profs-list">
+            ${renderProfsList(profsDMat)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProfsList(list) {
+      return list.map(p => `
+        <div class="prof-card">
+          <div>
+            <div class="prof-name">${p.nombre}</div>
+            <div class="prof-meta">📧 ${p.email} | 🏢 Oficina: <strong>${p.oficina}</strong></div>
+            <div style="font-size: 0.85rem; margin-top: 0.3rem;">⏰ ${p.horario}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterProfs(query) {
+      const filtered = profsDMat.filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()) || p.oficina.toLowerCase().includes(query.toLowerCase()));
+      document.getElementById('profs-list').innerHTML = renderProfsList(filtered);
+    }
+
+    // MODAL UTILS
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    function openRulesModal(courseId) {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom: 1rem;">Reglas de Evaluación ${courseId}</h2>
+        <p style="margin-bottom: 1rem; line-height: 1.6;">
+          <strong>Nota de Presentación (NP):</strong> 0.25 × C1 + 0.25 × C2 + 0.25 × C3 + 0.25 × PQ<br>
+          <strong>Aprobación:</strong> Nota final ≥ 55.<br>
+          <strong>Certamen Global:</strong> Voluntario. Reemplaza la nota más baja de los certámenes si beneficia al alumno.
+        </p>
+        <button class="btn-primary" onclick="closeModal()">Entendido</button>
+      `;
+      modal.classList.add('open');
+    }
+
+    // Initialize app
+    init();
   </script>
 </body>
 </html>
