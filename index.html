@@ -345,19 +345,30 @@
     .form-group { margin-bottom: 1.2rem; }
     .form-label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-main); }
     .form-input, .form-select, .form-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.95rem; font-weight: 600; }
-    .form-textarea { min-height: 120px; font-family: monospace; font-size: 0.85rem; }
-
-    .file-drop-area {
-      border: 2px dashed var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-      background: #FAF9F5;
-      cursor: pointer;
-      margin-bottom: 1rem;
-    }
-    .file-drop-area:hover { border-color: var(--usm-green); background: #E6F0EC; }
   </style>
+
+  <!-- FIREBASE SDK (JS ES MODULES) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbbGZ1aBY7mK5OcbZQIz_gXUtGKp-5cUQ",
+      authDomain: "rumbo-usm.firebaseapp.com",
+      databaseURL: "https://rumbo-usm-default-rtdb.firebaseio.com",
+      projectId: "rumbo-usm",
+      storageBucket: "rumbo-usm.firebasestorage.app",
+      messagingSenderId: "748982706148",
+      appId: "1:748982706148:web:a29af246ec956eb7c771f1",
+      measurementId: "G-C62HCQK70K"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.fs = { collection, onSnapshot, addDoc, deleteDoc, doc };
+  </script>
 </head>
 <body>
 
@@ -405,7 +416,6 @@
   </div>
 
   <script>
-    // Initial State & Pre-filled Defaults
     const defaultDates = {
       MAT070: { c1: '2026-09-22', c2: '2026-10-20', c3: '2026-11-24', q1: '2026-09-08', q2: '2026-09-29', q3: '2026-10-13', q4: '2026-11-03', q5: '2026-11-17', q6: '2026-12-01' },
       MAT061: { c1: '2026-09-24', c2: '2026-10-22', c3: '2026-11-26', ctr1: '2026-10-08', ctr2: '2026-11-12' },
@@ -417,7 +427,7 @@
       activeTab: 'dashboard',
       currentSemester: '2026-2',
       calYear: 2026,
-      calMonth: 9, // Octubre (0-indexed: 9)
+      calMonth: 9,
       selectedProfFilter: 'ALL',
       semesters: {
         '2026-2': {
@@ -489,20 +499,74 @@
     ];
 
     function init() {
-      const saved = localStorage.getItem('rumbo_state_v5');
+      const saved = localStorage.getItem('rumbo_state_v6');
       if(saved) {
-        state = JSON.parse(saved);
-        if(!state.dates || Object.keys(state.dates).length === 0) {
-          state.dates = JSON.parse(JSON.stringify(defaultDates));
+        try {
+          const parsed = JSON.parse(saved);
+          state = {
+            ...state,
+            ...parsed,
+            semesters: parsed.semesters || state.semesters,
+            grades: parsed.grades || {},
+            dates: parsed.dates || state.dates
+          };
+        } catch(e) {
+          console.error("Error al cargar estado local", e);
         }
       }
       renderSemesterSelect();
       renderSidebar();
       navigate(state.activeTab || 'dashboard');
+      initFirestoreCatalog();
     }
 
     function saveState() {
-      localStorage.setItem('rumbo_state_v5', JSON.stringify(state));
+      localStorage.setItem('rumbo_state_v6', JSON.stringify(state));
+    }
+
+    // SINCRONIZACIÓN CON CLOUD FIRESTORE EN TIEMPO REAL
+    function initFirestoreCatalog() {
+      if (!window.fs) {
+        setTimeout(initFirestoreCatalog, 300);
+        return;
+      }
+
+      const { collection, onSnapshot } = window.fs;
+      const catalogRef = collection(window.db, "catalog");
+
+      onSnapshot(catalogRef, (snapshot) => {
+        const fetchedCatalog = [];
+        snapshot.forEach((doc) => {
+          fetchedCatalog.push({ docId: doc.id, ...doc.data() });
+        });
+
+        if (fetchedCatalog.length > 0) {
+          state.catalog = fetchedCatalog;
+        } else {
+          seedInitialCatalog();
+        }
+        
+        saveState();
+        renderSidebar();
+        if (state.activeTab === 'admin') renderAdminPanel(document.getElementById('main-content'));
+      });
+    }
+
+    async function seedInitialCatalog() {
+      const initialCatalog = [
+        { id: 'MAT070', name: 'Introducción al Cálculo', sct: 6, bg: 'bg-mat070', hex: '#0D473B' },
+        { id: 'MAT061', name: 'Álgebra Lineal', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' },
+        { id: 'FIS111', name: 'Física General Mecánica', sct: 6, bg: 'bg-fis111', hex: '#059669' },
+        { id: 'INF129', name: 'Introducción a la Programación', sct: 7, bg: 'bg-inf129', hex: '#D97706' },
+        { id: 'MAT071', name: 'Cálculo I', sct: 6, bg: 'bg-mat071', hex: '#2563EB' },
+        { id: 'FIS100', name: 'Introducción a la Física', sct: 4, bg: 'bg-fis111', hex: '#059669' },
+        { id: 'MAT060', name: 'Álgebra y Geometría', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' }
+      ];
+
+      const { collection, addDoc } = window.fs;
+      for(const course of initialCatalog) {
+        await addDoc(collection(window.db, "catalog"), course);
+      }
     }
 
     function renderSemesterSelect() {
@@ -555,7 +619,7 @@
 
       body.innerHTML = `
         <h2 style="margin-bottom:1rem;">🔐 Acceso Restringido Administrador</h2>
-        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.2rem;">Por favor ingresa la contraseña para acceder al panel de administración.</p>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.2rem;">Ingresa la contraseña para agregar ramos al catálogo global.</p>
         
         <div class="form-group">
           <label class="form-label">Contraseña</label>
@@ -582,7 +646,6 @@
       }
     }
 
-    // Dynamic Evaluation Definitions for Course Types
     function getCourseGroupedEvals(courseId) {
       if(courseId === 'MAT070') {
         return [
@@ -678,7 +741,6 @@
         ];
       }
 
-      // Generic Course Fallback
       return [
         {
           groupName: 'Certámenes (75%)',
@@ -698,7 +760,6 @@
       ];
     }
 
-    // Accurate Course Grade Calculator
     function calculateCourseGrade(courseId) {
       const evalGroups = getCourseGroupedEvals(courseId);
       const grades = state.grades[courseId] || {};
@@ -723,7 +784,6 @@
         });
       });
 
-      // Handle Optional Global Exam Replacement Logic
       let finalGrade = accumulatedScore;
       const globalVal = parseFloat(grades['global']);
       if (!isNaN(globalVal) && globalVal > 0) {
@@ -756,21 +816,17 @@
         if (requiredScore < 0) requiredScore = 0;
       }
 
-      // Determine Accurate Status Label
       let statusText = 'Ramo en curso ⏳';
       let statusClass = 'status-inprogress';
-      let passed = false;
 
       if (finalGrade >= 55.0) {
         statusText = 'Aprobado ✓';
         statusClass = 'status-approved';
-        passed = true;
       } else if (gradedEvaluationsCount === totalEvaluationsCount && finalGrade < 55.0) {
         statusText = 'Reprobado ✕';
         statusClass = 'status-failed';
       }
 
-      // Find first pending key certamen / evaluation for required calculation display
       let reqName = 'Próxima evaluación';
       const allItems = evalGroups.flatMap(g => g.items);
       const firstPending = allItems.find(it => !grades[it.id] || grades[it.id] === '');
@@ -798,7 +854,6 @@
       };
     }
 
-    // DASHBOARD VIEW
     function renderDashboard(container) {
       const courses = state.semesters[state.currentSemester]?.courses || [];
       let totalSct = 0;
@@ -848,7 +903,6 @@
       `;
     }
 
-    // COURSE DETAILED VIEW
     function renderCourse(container, courseId) {
       const course = state.semesters[state.currentSemester].courses.find(c => c.id === courseId);
       if(!course) return navigate('dashboard');
@@ -886,7 +940,6 @@
               ${renderGroupedTables(courseId, evalGroups)}
             </div>
 
-            <!-- SIMULADOR INTERACTIVO DE PREDICCIÓN -->
             <div class="simulator-container">
               <div class="simulator-title">🧪 PREDICCIÓN DE NOTAS PENDIENTES</div>
               <h4 style="font-size: 1.1rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem;">Simula evaluaciones aún no realizadas</h4>
@@ -896,7 +949,6 @@
             </div>
           </div>
 
-          <!-- Columna Derecha -->
           <div>
             <div class="condition-card">
               <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-main);">Estado de tu ramo</h3>
@@ -928,11 +980,6 @@
                   <span style="font-weight:700; color:var(--text-muted); font-size:0.9rem;">/100</span>
                 </div>
               </div>
-            </div>
-
-            <div class="meta-card">
-              <div class="meta-title">Planifica con anticipación</div>
-              <div class="meta-desc">Rumbo te permite visualizar tus metas de notas y mantener tus certámenes al día en tu calendario.</div>
             </div>
           </div>
         </div>
@@ -979,15 +1026,12 @@
       `).join('');
     }
 
-    // FIXED SIMULATOR LOGIC: ONLY UNENTERED / PENDING EVALUATIONS SHOWN
     function renderSimulatorControls(courseId, groups) {
       const container = document.getElementById('simulatorContent');
       if(!container) return;
 
       const allEvals = groups.flatMap(g => g.items);
       const userGrades = state.grades[courseId] || {};
-
-      // Filter EXCLUSIVELY pending evaluations (no grade entered)
       const pendingEvals = allEvals.filter(e => userGrades[e.id] === undefined || userGrades[e.id] === '');
 
       if(pendingEvals.length === 0) {
@@ -1041,7 +1085,6 @@
       const wSource = sourceItem.weightPercent / 100;
       const wTarget = targetItem.weightPercent / 100;
 
-      // Sum of already entered grades (excluding simulated source and target)
       let currentGradedScore = 0;
       allEvals.forEach(item => {
         if(item.id !== sourceId && item.id !== targetId) {
@@ -1053,20 +1096,15 @@
       });
 
       if(sourceId === targetId) {
-        container.innerHTML = [20, 40, 55, 70, 85, 100].map(val => {
-          const needed = (55.0 - currentGradedScore) / wSource;
-          let msg = '';
-          if(needed <= 0) msg = '¡Ya apruebas sin depender de esta nota!';
-          else if(needed > 100) msg = `Requiere ${needed.toFixed(1)} pts (Excede el máximo 100.0)`;
-          else msg = `Necesitas obtener ${Math.max(0, needed).toFixed(1)} pts en esta evaluación para alcanzar 55.0`;
+        const needed = (55.0 - currentGradedScore) / wSource;
+        let msg = needed <= 0 ? '¡Ya apruebas sin depender de esta nota!' : `Necesitas obtener ${Math.max(0, needed).toFixed(1)} pts en esta evaluación para alcanzar 55.0`;
 
-          return `
-            <div class="sim-row">
-              <div class="sim-grade">Opciones</div>
-              <div class="sim-needed">${msg}</div>
-            </div>
-          `;
-        }).slice(0, 1).join('');
+        container.innerHTML = `
+          <div class="sim-row">
+            <div class="sim-grade">Opciones</div>
+            <div class="sim-needed">${msg}</div>
+          </div>
+        `;
         return;
       }
 
@@ -1117,7 +1155,6 @@
       updateGrade(courseId, evalId, val);
     }
 
-    // FULL INTERACTIVE CALENDAR WITH MONTH NAVIGATION
     function renderCalendar(container) {
       const year = state.calYear || 2026;
       const month = state.calMonth !== undefined ? state.calMonth : 9;
@@ -1170,15 +1207,14 @@
       const month = state.calMonth !== undefined ? state.calMonth : 9;
 
       const firstDay = new Date(year, month, 1);
-      let startDayOfWeek = firstDay.getDay(); // 0: Sun, 1: Mon...
-      startDayOfWeek = (startDayOfWeek + 6) % 7; // Convert to Mon:0..Sun:6
+      let startDayOfWeek = firstDay.getDay();
+      startDayOfWeek = (startDayOfWeek + 6) % 7;
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const courses = state.semesters[state.currentSemester]?.courses || [];
 
       let cells = '';
 
-      // Empty offset cells for previous month
       for (let i = 0; i < startDayOfWeek; i++) {
         cells += `<div class="cal-day-cell cal-day-empty"></div>`;
       }
@@ -1218,7 +1254,6 @@
       return cells;
     }
 
-    // DAY MODAL WITH DIRECT DATE MODIFICATION & EDITING
     function openDayModal(dateStr) {
       const modal = document.getElementById('modalOverlay');
       const body = document.getElementById('modalBody');
@@ -1345,7 +1380,6 @@
       navigate('calendar');
     }
 
-    // RENAMED & IMPROVED "HORARIOS DE CONSULTA" WITH CATEGORY SUBDIVISION
     function renderProfs(container) {
       const activeFilter = state.selectedProfFilter || 'ALL';
 
@@ -1408,7 +1442,6 @@
       `).join('');
     }
 
-    // CATALOG & LIBRARY MODAL
     function openCatalogModal() {
       const modal = document.getElementById('modalOverlay');
       const body = document.getElementById('modalBody');
@@ -1461,7 +1494,6 @@
       }
     }
 
-    // LIBRARY VIEW
     function renderLibrary(container) {
       container.innerHTML = `
         <div class="card">
@@ -1518,18 +1550,17 @@
       navigate('library');
     }
 
-    // ADMIN PANEL
     function renderAdminPanel(container) {
       container.innerHTML = `
         <div class="card">
           <h2 style="font-weight:800; margin-bottom:0.5rem;">⚙️ Panel de Administración Rumbo</h2>
-          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Añade y modifica asignaturas del catálogo sin tocar código.</p>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Añade asignaturas al catálogo global sincronizado con Cloud Firestore.</p>
 
           <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
-            <button class="btn-primary" onclick="openCreateCourseModal()">+ Crear Ramo Manualmente</button>
+            <button class="btn-primary" onclick="openCreateCourseModal()">+ Crear Ramo Globalmente</button>
           </div>
 
-          <h3 style="font-weight:800; margin-bottom:1rem;">Catálogo de Ramos Actuales</h3>
+          <h3 style="font-weight:800; margin-bottom:1rem;">Catálogo Global de Ramos Actuales</h3>
           <div id="adminCatalogList">
             ${state.catalog.map((c, idx) => `
               <div class="prof-card">
@@ -1539,7 +1570,7 @@
                   <div class="prof-meta" style="margin-top:0.2rem;">${c.sct} SCT · Color: <span style="display:inline-block; width:12px; height:12px; background:${c.hex}; border-radius:3px;"></span></div>
                 </div>
                 <div>
-                  <button class="btn-danger" onclick="deleteCatalogCourse(${idx})">Eliminar Ramo</button>
+                  <button class="btn-danger" onclick="deleteCatalogCourse(${idx})">Eliminar Ramo Global</button>
                 </div>
               </div>
             `).join('')}
@@ -1553,7 +1584,7 @@
       const body = document.getElementById('modalBody');
 
       body.innerHTML = `
-        <h2 style="margin-bottom:1.5rem;">Crear Nuevo Ramo en el Catálogo</h2>
+        <h2 style="margin-bottom:1.5rem;">Crear Nuevo Ramo en el Catálogo Global</h2>
         <div class="form-group">
           <label class="form-label">Sigla Ramo (Ej: FIS120)</label>
           <input type="text" class="form-input" id="newCourseSigla" placeholder="FIS120">
@@ -1574,13 +1605,13 @@
         </div>
         <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
           <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-          <button class="btn-primary" onclick="saveNewCourse()">Guardar en Catálogo</button>
+          <button class="btn-primary" onclick="saveNewCourse()">Guardar en la Nube</button>
         </div>
       `;
       modal.classList.add('open');
     }
 
-    function saveNewCourse() {
+    async function saveNewCourse() {
       const sigla = document.getElementById('newCourseSigla').value.toUpperCase().trim();
       const name = document.getElementById('newCourseName').value.trim();
       const sct = parseInt(document.getElementById('newCourseSct').value) || 6;
@@ -1588,24 +1619,37 @@
 
       if(!sigla || !name) return alert('Por favor ingresa la sigla y el nombre del ramo.');
 
-      state.catalog.push({
-        id: sigla,
-        name: name,
-        sct: sct,
-        bg: 'bg-mat071',
-        hex: hex
-      });
+      try {
+        const { collection, addDoc } = window.fs;
+        await addDoc(collection(window.db, "catalog"), {
+          id: sigla,
+          name: name,
+          sct: sct,
+          bg: 'bg-mat071',
+          hex: hex
+        });
 
-      saveState();
-      closeModal();
-      navigate('admin');
+        closeModal();
+        alert(`¡El ramo ${sigla} ha sido publicado globalmente!`);
+      } catch (error) {
+        console.error("Error al guardar en Firestore:", error);
+        alert("Error al guardar el ramo en la nube.");
+      }
     }
 
-    function deleteCatalogCourse(idx) {
-      if(confirm('¿Seguro que deseas eliminar esta asignatura del catálogo?')) {
-        state.catalog.splice(idx, 1);
-        saveState();
-        navigate('admin');
+    async function deleteCatalogCourse(idx) {
+      const item = state.catalog[idx];
+      if(!item) return;
+
+      if(confirm(`¿Seguro que deseas eliminar ${item.id} del catálogo global?`)) {
+        try {
+          if(item.docId) {
+            const { doc, deleteDoc } = window.fs;
+            await deleteDoc(doc(window.db, "catalog", item.docId));
+          }
+        } catch (error) {
+          console.error("Error al eliminar en Firestore:", error);
+        }
       }
     }
 
@@ -1620,16 +1664,15 @@
       body.innerHTML = `
         <h2 style="margin-bottom: 1rem;">Reglas de Evaluación ${courseId}</h2>
         <p style="margin-bottom: 1rem; line-height: 1.6;">
-          <strong>Nota de Presentación (NP):</strong> Calculada a partir de las ponderaciones de cada certamen y controles del programa.<br>
+          <strong>Nota de Presentación (NP):</strong> Calculada a partir de las ponderaciones del programa.<br>
           <strong>Aprobación:</strong> Nota final acumulada ≥ 55.0.<br>
-          <strong>Certamen Global:</strong> Opcional / Voluntario. Reemplaza el certamen más bajo si este beneficia la nota final.
+          <strong>Certamen Global:</strong> Opcional. Reemplaza la peor nota si esta beneficia la nota final.
         </p>
         <button class="btn-primary" onclick="closeModal()">Entendido</button>
       `;
       modal.classList.add('open');
     }
 
-    // Initialize application
     init();
   </script>
 </body>
