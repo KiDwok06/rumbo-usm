@@ -162,6 +162,7 @@
     }
     .status-approved { background-color: #D1FAE5; color: #065F46; }
     .status-failed { background-color: #FEE2E2; color: #991B1B; }
+    .status-inprogress { background-color: #FEF3C7; color: #92400E; }
 
     .rules-btn {
       background: rgba(255,255,255,0.15);
@@ -216,7 +217,7 @@
     .condition-item:last-child { border-bottom: none; }
     .condition-text { font-size: 0.9rem; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 0.5rem; }
     .condition-tag { font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px; }
-    .tag-pending { color: #6B7280; background: #F3F4F6; }
+    .tag-pending { color: #854D0E; background: #FEF3C7; }
     .tag-passed { color: #065F46; background: #D1FAE5; }
 
     .global-card {
@@ -307,15 +308,24 @@
     
     .sim-row { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: white; border-radius: 10px; margin-bottom: 0.5rem; border: 1px solid #F3E8FF; }
     .sim-grade { font-size: 1.3rem; font-weight: 800; color: #581C87; width: 60px; }
-    .sim-needed { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+    .sim-needed { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
     .btn-try { background: #E9D5FF; color: #581C87; border: none; padding: 0.45rem 1.1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+    .cal-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .cal-nav-btn { background: white; border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; color: var(--text-main); }
+    .cal-nav-btn:hover { background: var(--accent-cream); border-color: var(--usm-green); }
 
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-top: 1rem; }
     .cal-day-header { text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); padding: 0.5rem; }
-    .cal-day-cell { background: white; border: 1px solid var(--border-color); min-height: 85px; border-radius: 10px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; }
+    .cal-day-cell { background: white; border: 1px solid var(--border-color); min-height: 90px; border-radius: 10px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; }
     .cal-day-cell:hover { border-color: var(--usm-green); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .cal-day-num { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.3rem; }
-    .cal-event-tag { font-size: 0.65rem; font-weight: 700; color: white; padding: 0.15rem 0.35rem; border-radius: 4px; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cal-day-cell.cal-day-empty { background: #FAF9F5; border-color: transparent; cursor: default; }
+    .cal-day-num { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.3rem; color: var(--text-main); }
+    .cal-event-tag { font-size: 0.65rem; font-weight: 700; color: white; padding: 0.2rem 0.4rem; border-radius: 4px; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .filter-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .filter-pill { padding: 0.4rem 0.9rem; border-radius: 20px; border: 1px solid var(--border-color); background: white; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: var(--text-muted); }
+    .filter-pill.active { background: var(--usm-green); color: white; border-color: var(--usm-green); }
 
     .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity:0; pointer-events:none; transition: opacity 0.2s; }
     .modal-overlay.open { opacity:1; pointer-events:auto; }
@@ -373,7 +383,7 @@
         <div class="nav-label">General</div>
         <button class="nav-btn active" id="btn-nav-dashboard" onclick="navigate('dashboard')">📊 Mis Notas</button>
         <button class="nav-btn" id="btn-nav-calendar" onclick="navigate('calendar')">📅 Calendario</button>
-        <button class="nav-btn" id="btn-nav-profs" onclick="navigate('profs')">👨‍🏫 Horarios DMat</button>
+        <button class="nav-btn" id="btn-nav-profs" onclick="navigate('profs')">👨‍🏫 Horarios de Consulta</button>
         <button class="nav-btn" id="btn-nav-library" onclick="navigate('library')">📚 Biblioteca Semestres</button>
       </div>
 
@@ -395,10 +405,20 @@
   </div>
 
   <script>
-    // State Management
+    // Initial State & Pre-filled Defaults
+    const defaultDates = {
+      MAT070: { c1: '2026-09-22', c2: '2026-10-20', c3: '2026-11-24', q1: '2026-09-08', q2: '2026-09-29', q3: '2026-10-13', q4: '2026-11-03', q5: '2026-11-17', q6: '2026-12-01' },
+      MAT061: { c1: '2026-09-24', c2: '2026-10-22', c3: '2026-11-26', ctr1: '2026-10-08', ctr2: '2026-11-12' },
+      FIS111: { c1: '2026-09-25', c2: '2026-10-23', c3: '2026-11-27', l1: '2026-09-11', l2: '2026-10-02', l3: '2026-10-30', l4: '2026-11-20' },
+      INF129: { c1: '2026-09-30', c2: '2026-11-25', t1: '2026-10-05', t2: '2026-11-02', t3: '2026-12-07' }
+    };
+
     let state = {
       activeTab: 'dashboard',
       currentSemester: '2026-2',
+      calYear: 2026,
+      calMonth: 9, // Octubre (0-indexed: 9)
+      selectedProfFilter: 'ALL',
       semesters: {
         '2026-2': {
           name: '2026 - 2° Semestre',
@@ -420,60 +440,69 @@
         { id: 'MAT060', name: 'Álgebra y Geometría', sct: 6, bg: 'bg-mat061', hex: '#6B46C1' }
       ],
       grades: {},
-      dates: {},
+      dates: JSON.parse(JSON.stringify(defaultDates)),
       customEvents: []
     };
 
-    const profsDMat = [
-      { nombre: "Alejandra Orellana", horario: "Lunes 12:30 a 13:40 (Bloques 7-8)", email: "alejandra.orellanac@usm.cl", oficina: "A-157" },
-      { nombre: "Alexis Fuentes", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "alexis.fuentesp@usm.cl", oficina: "A-169" },
-      { nombre: "Álvaro Macías", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "alvaro.macias@usm.cl", oficina: "A-157" },
-      { nombre: "Angélica Torres", horario: "Miércoles 14:40 a 15:50 (Bloques 9-10)", email: "angelica.torresb@usm.cl", oficina: "A-165" },
-      { nombre: "Benjamín Vera", horario: "Jueves 11:05 a 12:15 (Bloques 5-6)", email: "benjamin.verav@usm.cl", oficina: "A-157" },
-      { nombre: "Carlos Finat", horario: "Solicitar atención por correo", email: "carlos.finat@usm.cl", oficina: "A-157" },
-      { nombre: "Claudio Henríquez", horario: "Lunes 11:05 a 12:15 (Bloques 5-6)", email: "claudio.henriquezt@usm.cl", oficina: "A-157" },
-      { nombre: "Cristian Hernández", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "cristian.hernandezpe@usm.cl", oficina: "A-157" },
-      { nombre: "Daniel Vidal", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "daniel.vidalf@usm.cl", oficina: "A-157" },
-      { nombre: "Eduardo Hirsh", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "eduardo.hirsh@usm.cl", oficina: "A-157" },
-      { nombre: "Enrique Otárola", horario: "Martes 14:40 a 15:50 (Bloques 9-10)", email: "enrique.otarola@usm.cl", oficina: "A-148" },
-      { nombre: "Erwin Hernández", horario: "L-M-Mi-J 08:15 a 08:50 (Bloque 1)", email: "erwin.hernandez@usm.cl", oficina: "F-551" },
-      { nombre: "Estefanía Bravo", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "estefania.bravo@usm.cl", oficina: "A-163" },
-      { nombre: "Felipe Asbún", horario: "Martes 16:05 a 17:15 (Bloques 11-12)", email: "felipe.asbun@usm.cl", oficina: "A-157" },
-      { nombre: "Felipe Rivera", horario: "Martes 11:40 a 12:15 (Bloque 6)", email: "felipe.riverame@usm.cl", oficina: "A-157" },
-      { nombre: "Fernanda Cares", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "fernanda.cares@usm.cl", oficina: "A-157" },
-      { nombre: "Fernanda Torres", horario: "Viernes 14:40 a 15:50 (Bloques 9-10)", email: "fernanda.torrest@usm.cl", oficina: "A-157" },
-      { nombre: "Gonzalo Contador", horario: "Solicitar por correo (practicasj.icmat@usm.cl)", email: "gonzalo.contador@usm.cl", oficina: "A-159" },
-      { nombre: "Gredy Salmerón", horario: "Martes 11:05 a 12:15 (Bloques 5-6)", email: "gredy.salmeron@usm.cl", oficina: "A-166" },
-      { nombre: "Igsyl Domínguez", horario: "Lunes 11:05 a 12:15 (Bloques 5-6)", email: "igsyl.dominguez@usm.cl", oficina: "A-164" },
-      { nombre: "Isabel Flores", horario: "Lunes 12:30 a 13:05 (Bloque 7)", email: "isabel.flores@usm.cl", oficina: "A-150" },
-      { nombre: "Isabel Martínez", horario: "Martes 11:05 a 12:15 (Bloques 5-6)", email: "isabel.martineza@usm.cl", oficina: "A-157" },
-      { nombre: "Johan Van Der Molen", horario: "Miércoles 17:00 a 18:00", email: "johan.vandermolen@usm.cl", oficina: "A-159" },
-      { nombre: "José Rosales", horario: "Lunes 16:05 a 17:15 (Bloques 11-12)", email: "jose.rosales.s@usach.cl", oficina: "A-157" },
-      { nombre: "José Yáñez", horario: "Miércoles y Viernes 14:40 a 15:50", email: "jose.yaneze@usm.cl", oficina: "A-160" },
-      { nombre: "Juan Bahamondes", horario: "Martes y Jueves 14:40 a 15:50", email: "juan.bahamondes@usm.cl", oficina: "A-152" },
-      { nombre: "Juan Muñoz", horario: "Viernes 11:05 a 12:15 (Bloques 5-6)", email: "juan.munoz@usm.cl", oficina: "A-152" },
-      { nombre: "Leonel Guerrero", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "leonel.guerrero@usm.cl", oficina: "A-154" },
-      { nombre: "Leonelo Iturriaga", horario: "Martes 16:05 a 17:15 (Bloque 11-12)", email: "leonelo.iturriaga@usm.cl", oficina: "A-151" },
-      { nombre: "Luis Briceño", horario: "Martes y Jueves 14:40 a 15:50", email: "luis.briceno@usm.cl", oficina: "A-147" },
-      { nombre: "Nicolé Geyssel", horario: "Jueves 09:40 a 10:50 (Bloques 3-4)", email: "nicole.geyssel@usm.cl", oficina: "A-162" },
-      { nombre: "Pablo González", horario: "Viernes 08:15 a 09:25 (Bloques 1-2)", email: "pablo.gonzalezl@usm.cl", oficina: "A-157" },
-      { nombre: "Patricio Quiroz", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "patricio.quiroz@usm.cl", oficina: "A-075" },
-      { nombre: "Roberto Ruggiero", horario: "Jueves 09:40 a 10:50 (Bloques 3-4)", email: "roberto.ruggiero@usm.cl", oficina: "A-157" },
-      { nombre: "Rodrigo Lecaros", horario: "Lunes 09:40 a 12:15 (Bloques 3-6)", email: "rodrigo.lecaros@usm.cl", oficina: "A-063" },
-      { nombre: "Sergio López", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "sergio.lopezr@usm.cl", oficina: "A-170" }
+    const profesoresConsulta = [
+      { nombre: "Alejandra Orellana", horario: "Lunes 12:30 a 13:40 (Bloques 7-8)", email: "alejandra.orellanac@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Alexis Fuentes", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "alexis.fuentesp@usm.cl", oficina: "A-169", ramo: "MAT061" },
+      { nombre: "Álvaro Macías", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "alvaro.macias@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Angélica Torres", horario: "Miércoles 14:40 a 15:50 (Bloques 9-10)", email: "angelica.torresb@usm.cl", oficina: "A-165", ramo: "MAT071" },
+      { nombre: "Benjamín Vera", horario: "Jueves 11:05 a 12:15 (Bloques 5-6)", email: "benjamin.verav@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Carlos Finat", horario: "Solicitar atención por correo", email: "carlos.finat@usm.cl", oficina: "A-157", ramo: "MAT061" },
+      { nombre: "Claudio Henríquez", horario: "Lunes 11:05 a 12:15 (Bloques 5-6)", email: "claudio.henriquezt@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Cristian Hernández", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "cristian.hernandezpe@usm.cl", oficina: "A-157", ramo: "MAT061" },
+      { nombre: "Daniel Vidal", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "daniel.vidalf@usm.cl", oficina: "A-157", ramo: "FIS111" },
+      { nombre: "Eduardo Hirsh", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "eduardo.hirsh@usm.cl", oficina: "A-157", ramo: "FIS111" },
+      { nombre: "Enrique Otárola", horario: "Martes 14:40 a 15:50 (Bloques 9-10)", email: "enrique.otarola@usm.cl", oficina: "A-148", ramo: "MAT071" },
+      { nombre: "Erwin Hernández", horario: "L-M-Mi-J 08:15 a 08:50 (Bloque 1)", email: "erwin.hernandez@usm.cl", oficina: "F-551", ramo: "MAT070" },
+      { nombre: "Estefanía Bravo", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "estefania.bravo@usm.cl", oficina: "A-163", ramo: "INF129" },
+      { nombre: "Felipe Asbún", horario: "Martes 16:05 a 17:15 (Bloques 11-12)", email: "felipe.asbun@usm.cl", oficina: "A-157", ramo: "MAT061" },
+      { nombre: "Felipe Rivera", horario: "Martes 11:40 a 12:15 (Bloque 6)", email: "felipe.riverame@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Fernanda Cares", horario: "Viernes 09:40 a 10:50 (Bloques 3-4)", email: "fernanda.cares@usm.cl", oficina: "A-157", ramo: "FIS111" },
+      { nombre: "Fernanda Torres", horario: "Viernes 14:40 a 15:50 (Bloques 9-10)", email: "fernanda.torrest@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Gonzalo Contador", horario: "Solicitar por correo (practicasj.icmat@usm.cl)", email: "gonzalo.contador@usm.cl", oficina: "A-159", ramo: "MAT071" },
+      { nombre: "Gredy Salmerón", horario: "Martes 11:05 a 12:15 (Bloques 5-6)", email: "gredy.salmeron@usm.cl", oficina: "A-166", ramo: "MAT061" },
+      { nombre: "Igsyl Domínguez", horario: "Lunes 11:05 a 12:15 (Bloques 5-6)", email: "igsyl.dominguez@usm.cl", oficina: "A-164", ramo: "INF129" },
+      { nombre: "Isabel Flores", horario: "Lunes 12:30 a 13:05 (Bloque 7)", email: "isabel.flores@usm.cl", oficina: "A-150", ramo: "MAT070" },
+      { nombre: "Isabel Martínez", horario: "Martes 11:05 a 12:15 (Bloques 5-6)", email: "isabel.martineza@usm.cl", oficina: "A-157", ramo: "MAT061" },
+      { nombre: "Johan Van Der Molen", horario: "Miércoles 17:00 a 18:00", email: "johan.vandermolen@usm.cl", oficina: "A-159", ramo: "MAT071" },
+      { nombre: "José Rosales", horario: "Lunes 16:05 a 17:15 (Bloques 11-12)", email: "jose.rosales.s@usach.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "José Yáñez", horario: "Miércoles y Viernes 14:40 a 15:50", email: "jose.yaneze@usm.cl", oficina: "A-160", ramo: "MAT061" },
+      { nombre: "Juan Bahamondes", horario: "Martes y Jueves 14:40 a 15:50", email: "juan.bahamondes@usm.cl", oficina: "A-152", ramo: "MAT070" },
+      { nombre: "Juan Muñoz", horario: "Viernes 11:05 a 12:15 (Bloques 5-6)", email: "juan.munoz@usm.cl", oficina: "A-152", ramo: "MAT071" },
+      { nombre: "Leonel Guerrero", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "leonel.guerrero@usm.cl", oficina: "A-154", ramo: "MAT061" },
+      { nombre: "Leonelo Iturriaga", horario: "Martes 16:05 a 17:15 (Bloque 11-12)", email: "leonelo.iturriaga@usm.cl", oficina: "A-151", ramo: "MAT070" },
+      { nombre: "Luis Briceño", horario: "Martes y Jueves 14:40 a 15:50", email: "luis.briceno@usm.cl", oficina: "A-147", ramo: "MAT071" },
+      { nombre: "Nicolé Geyssel", horario: "Jueves 09:40 a 10:50 (Bloques 3-4)", email: "nicole.geyssel@usm.cl", oficina: "A-162", ramo: "INF129" },
+      { nombre: "Pablo González", horario: "Viernes 08:15 a 09:25 (Bloques 1-2)", email: "pablo.gonzalezl@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Patricio Quiroz", horario: "Martes 09:40 a 10:50 (Bloques 3-4)", email: "patricio.quiroz@usm.cl", oficina: "A-075", ramo: "MAT061" },
+      { nombre: "Roberto Ruggiero", horario: "Jueves 09:40 a 10:50 (Bloques 3-4)", email: "roberto.ruggiero@usm.cl", oficina: "A-157", ramo: "MAT070" },
+      { nombre: "Rodrigo Lecaros", horario: "Lunes 09:40 a 12:15 (Bloques 3-6)", email: "rodrigo.lecaros@usm.cl", oficina: "A-063", ramo: "MAT071" },
+      { nombre: "Sergio López", horario: "Miércoles 11:05 a 12:15 (Bloques 5-6)", email: "sergio.lopezr@usm.cl", oficina: "A-170", ramo: "MAT070" }
     ];
 
-    // Load LocalStorage
+    const monthNames = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
     function init() {
-      const saved = localStorage.getItem('rumbo_state_v4');
-      if(saved) state = JSON.parse(saved);
+      const saved = localStorage.getItem('rumbo_state_v5');
+      if(saved) {
+        state = JSON.parse(saved);
+        if(!state.dates || Object.keys(state.dates).length === 0) {
+          state.dates = JSON.parse(JSON.stringify(defaultDates));
+        }
+      }
       renderSemesterSelect();
       renderSidebar();
-      navigate(state.activeTab);
+      navigate(state.activeTab || 'dashboard');
     }
 
     function saveState() {
-      localStorage.setItem('rumbo_state_v4', JSON.stringify(state));
+      localStorage.setItem('rumbo_state_v5', JSON.stringify(state));
     }
 
     function renderSemesterSelect() {
@@ -520,7 +549,6 @@
       saveState();
     }
 
-    // ADMIN PASSWORD VERIFICATION
     function promptAdminPassword() {
       const modal = document.getElementById('modalOverlay');
       const body = document.getElementById('modalBody');
@@ -554,35 +582,253 @@
       }
     }
 
+    // Dynamic Evaluation Definitions for Course Types
+    function getCourseGroupedEvals(courseId) {
+      if(courseId === 'MAT070') {
+        return [
+          {
+            groupName: 'Certámenes (75%)',
+            items: [
+              { id: 'c1', name: 'Certamen 1 (C1)', shortName: 'C1', weightPercent: 25 },
+              { id: 'c2', name: 'Certamen 2 (C2)', shortName: 'C2', weightPercent: 25 },
+              { id: 'c3', name: 'Certamen 3 (C3)', shortName: 'C3', weightPercent: 25 }
+            ]
+          },
+          {
+            groupName: 'Controles de Lectura y Taller (25%)',
+            items: [
+              { id: 'q1', name: 'Control 1 (Q1)', shortName: 'Q1', weightPercent: 4.166 },
+              { id: 'q2', name: 'Control 2 (Q2)', shortName: 'Q2', weightPercent: 4.166 },
+              { id: 'q3', name: 'Control 3 (Q3)', shortName: 'Q3', weightPercent: 4.166 },
+              { id: 'q4', name: 'Control 4 (Q4)', shortName: 'Q4', weightPercent: 4.166 },
+              { id: 'q5', name: 'Control 5 (Q5)', shortName: 'Q5', weightPercent: 4.166 },
+              { id: 'q6', name: 'Control 6 (Q6)', shortName: 'Q6', weightPercent: 4.166 }
+            ]
+          }
+        ];
+      } else if(courseId === 'MAT061' || courseId === 'MAT071' || courseId === 'MAT060') {
+        return [
+          {
+            groupName: 'Certámenes (75%)',
+            items: [
+              { id: 'c1', name: 'Certamen 1 (C1)', shortName: 'C1', weightPercent: 25 },
+              { id: 'c2', name: 'Certamen 2 (C2)', shortName: 'C2', weightPercent: 25 },
+              { id: 'c3', name: 'Certamen 3 (C3)', shortName: 'C3', weightPercent: 25 }
+            ]
+          },
+          {
+            groupName: 'Controles / Actividades (25%)',
+            items: [
+              { id: 'ctr1', name: 'Control 1 (Ctr1)', shortName: 'Ctr1', weightPercent: 12.5 },
+              { id: 'ctr2', name: 'Control 2 (Ctr2)', shortName: 'Ctr2', weightPercent: 12.5 }
+            ]
+          }
+        ];
+      } else if(courseId === 'FIS111' || courseId === 'FIS100') {
+        return [
+          {
+            groupName: 'Certámenes (60%)',
+            items: [
+              { id: 'c1', name: 'Certamen 1 (C1)', shortName: 'C1', weightPercent: 20 },
+              { id: 'c2', name: 'Certamen 2 (C2)', shortName: 'C2', weightPercent: 20 },
+              { id: 'c3', name: 'Certamen 3 (C3)', shortName: 'C3', weightPercent: 20 }
+            ]
+          },
+          {
+            groupName: 'Laboratorios (20%)',
+            items: [
+              { id: 'l1', name: 'Laboratorio 1', shortName: 'L1', weightPercent: 5 },
+              { id: 'l2', name: 'Laboratorio 2', shortName: 'L2', weightPercent: 5 },
+              { id: 'l3', name: 'Laboratorio 3', shortName: 'L3', weightPercent: 5 },
+              { id: 'l4', name: 'Laboratorio 4', shortName: 'L4', weightPercent: 5 }
+            ]
+          },
+          {
+            groupName: 'Controles de Clase (20%)',
+            items: [
+              { id: 'q1', name: 'Control 1', shortName: 'Q1', weightPercent: 10 },
+              { id: 'q2', name: 'Control 2', shortName: 'Q2', weightPercent: 10 }
+            ]
+          }
+        ];
+      } else if(courseId === 'INF129') {
+        return [
+          {
+            groupName: 'Certámenes (50%)',
+            items: [
+              { id: 'c1', name: 'Certamen 1 (C1)', shortName: 'C1', weightPercent: 25 },
+              { id: 'c2', name: 'Certamen 2 (C2)', shortName: 'C2', weightPercent: 25 }
+            ]
+          },
+          {
+            groupName: 'Tareas de Programación (30%)',
+            items: [
+              { id: 't1', name: 'Tarea 1 (T1)', shortName: 'T1', weightPercent: 10 },
+              { id: 't2', name: 'Tarea 2 (T2)', shortName: 'T2', weightPercent: 10 },
+              { id: 't3', name: 'Tarea 3 (T3)', shortName: 'T3', weightPercent: 10 }
+            ]
+          },
+          {
+            groupName: 'Evaluaciones Cortas / UVAs (20%)',
+            items: [
+              { id: 'u1', name: 'UVA 1', shortName: 'U1', weightPercent: 10 },
+              { id: 'u2', name: 'UVA 2', shortName: 'U2', weightPercent: 10 }
+            ]
+          }
+        ];
+      }
+
+      // Generic Course Fallback
+      return [
+        {
+          groupName: 'Certámenes (75%)',
+          items: [
+            { id: 'c1', name: 'Certamen 1 (C1)', shortName: 'C1', weightPercent: 25 },
+            { id: 'c2', name: 'Certamen 2 (C2)', shortName: 'C2', weightPercent: 25 },
+            { id: 'c3', name: 'Certamen 3 (C3)', shortName: 'C3', weightPercent: 25 }
+          ]
+        },
+        {
+          groupName: 'Evaluaciones Adicionales (25%)',
+          items: [
+            { id: 'e1', name: 'Evaluación 1', shortName: 'E1', weightPercent: 12.5 },
+            { id: 'e2', name: 'Evaluación 2', shortName: 'E2', weightPercent: 12.5 }
+          ]
+        }
+      ];
+    }
+
+    // Accurate Course Grade Calculator
+    function calculateCourseGrade(courseId) {
+      const evalGroups = getCourseGroupedEvals(courseId);
+      const grades = state.grades[courseId] || {};
+
+      let totalWeightEvaluated = 0;
+      let accumulatedScore = 0;
+      let totalEvaluationsCount = 0;
+      let gradedEvaluationsCount = 0;
+
+      evalGroups.forEach(group => {
+        group.items.forEach(item => {
+          totalEvaluationsCount++;
+          const val = grades[item.id];
+          if (val !== undefined && val !== null && val !== '') {
+            const numVal = parseFloat(val);
+            if (!isNaN(numVal)) {
+              accumulatedScore += numVal * (item.weightPercent / 100);
+              totalWeightEvaluated += (item.weightPercent / 100);
+              gradedEvaluationsCount++;
+            }
+          }
+        });
+      });
+
+      // Handle Optional Global Exam Replacement Logic
+      let finalGrade = accumulatedScore;
+      const globalVal = parseFloat(grades['global']);
+      if (!isNaN(globalVal) && globalVal > 0) {
+        let certamenItems = [];
+        evalGroups.forEach(g => {
+          g.items.forEach(it => {
+            if (it.id.startsWith('c')) certamenItems.push(it);
+          });
+        });
+        if (certamenItems.length > 0) {
+          let lowestCertVal = 100;
+          let lowestCertWeight = 0.25;
+          certamenItems.forEach(it => {
+            const cVal = parseFloat(grades[it.id]) || 0;
+            if (cVal < lowestCertVal) {
+              lowestCertVal = cVal;
+              lowestCertWeight = (it.weightPercent / 100);
+            }
+          });
+          if (globalVal > lowestCertVal) {
+            finalGrade = accumulatedScore + (globalVal - lowestCertVal) * lowestCertWeight;
+          }
+        }
+      }
+
+      const weightRemaining = 1.0 - totalWeightEvaluated;
+      let requiredScore = 0;
+      if (weightRemaining > 0) {
+        requiredScore = (55.0 - accumulatedScore) / weightRemaining;
+        if (requiredScore < 0) requiredScore = 0;
+      }
+
+      // Determine Accurate Status Label
+      let statusText = 'Ramo en curso ⏳';
+      let statusClass = 'status-inprogress';
+      let passed = false;
+
+      if (finalGrade >= 55.0) {
+        statusText = 'Aprobado ✓';
+        statusClass = 'status-approved';
+        passed = true;
+      } else if (gradedEvaluationsCount === totalEvaluationsCount && finalGrade < 55.0) {
+        statusText = 'Reprobado ✕';
+        statusClass = 'status-failed';
+      }
+
+      // Find first pending key certamen / evaluation for required calculation display
+      let reqName = 'Próxima evaluación';
+      const allItems = evalGroups.flatMap(g => g.items);
+      const firstPending = allItems.find(it => !grades[it.id] || grades[it.id] === '');
+      if(firstPending) {
+        reqName = firstPending.name;
+      }
+
+      return {
+        accumulatedScore,
+        currentScore: accumulatedScore,
+        finalGrade: gradedEvaluationsCount > 0 ? finalGrade : 0,
+        hasGrades: gradedEvaluationsCount > 0,
+        isComplete: gradedEvaluationsCount === totalEvaluationsCount,
+        required: requiredScore,
+        reqName,
+        statusText,
+        statusClass,
+        conditions: [
+          {
+            text: 'Nota acumulada final ≥ 55.0',
+            passed: finalGrade >= 55.0,
+            label: finalGrade >= 55.0 ? 'Cumplida ✓' : (gradedEvaluationsCount === 0 ? 'Sin notas' : 'En curso ⏳')
+          }
+        ]
+      };
+    }
+
     // DASHBOARD VIEW
     function renderDashboard(container) {
       const courses = state.semesters[state.currentSemester]?.courses || [];
       let totalSct = 0;
       let weightedSum = 0;
+      let activeCoursesWithGrades = 0;
 
       const courseCards = courses.map(c => {
         const calc = calculateCourseGrade(c.id);
         totalSct += c.sct;
         weightedSum += calc.finalGrade * c.sct;
+        if(calc.hasGrades) activeCoursesWithGrades++;
 
         return `
           <div class="card" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="navigate('${c.id}')">
             <div>
               <span class="course-badge ${c.bg}" style="font-size: 0.8rem;">${c.id}</span>
               <h3 style="margin-top: 0.4rem; font-size: 1.2rem;">${c.name}</h3>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Puntaje actual: ${calc.currentScore.toFixed(1)} / 100.0</p>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Puntaje actual acumulado: ${calc.currentScore.toFixed(1)} / 100.0</p>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 2rem; font-weight: 800; color: ${calc.finalGrade >= 55 ? 'var(--usm-green)' : '#9B1C1C'}">${calc.finalGrade.toFixed(1)}</div>
-              <span class="status-pill ${calc.finalGrade >= 55 ? 'status-approved' : 'status-failed'}">
-                ${calc.finalGrade >= 55 ? 'Aprobado ✓' : 'Reprobado ✕'}
+              <div style="font-size: 2rem; font-weight: 800; color: ${calc.finalGrade >= 55 ? 'var(--usm-green)' : (calc.hasGrades ? '#9B1C1C' : '#66706E')}">${calc.hasGrades ? calc.finalGrade.toFixed(1) : '—'}</div>
+              <span class="status-pill ${calc.statusClass}">
+                ${calc.statusText}
               </span>
             </div>
           </div>
         `;
       }).join('');
 
-      const ppa = totalSct > 0 ? (weightedSum / totalSct) : 0;
+      const ppa = (totalSct > 0 && activeCoursesWithGrades > 0) ? (weightedSum / totalSct) : 0;
 
       container.innerHTML = `
         <div class="card hero-card">
@@ -593,8 +839,8 @@
             </div>
           </div>
           <div class="hero-score-box">
-            <div class="hero-score">${ppa.toFixed(1)}</div>
-            <div class="hero-max">PPA Semestral</div>
+            <div class="hero-score">${ppa > 0 ? ppa.toFixed(1) : '0.0'}</div>
+            <div class="hero-max">PPA Semestral Proyectado</div>
           </div>
         </div>
         <h3 style="margin-bottom: 1rem; font-weight: 800;">Tus Asignaturas</h3>
@@ -602,59 +848,13 @@
       `;
     }
 
-    // CALCULATE GRADES LOGIC
-    function calculateCourseGrade(courseId) {
-      const grades = state.grades[courseId] || {};
-      
-      if(courseId === 'MAT070') {
-        const c1 = parseFloat(grades['c1']) || 0;
-        const c2 = parseFloat(grades['c2']) || 0;
-        const c3 = parseFloat(grades['c3']) || 0;
-        const qGrades = [1,2,3,4,5,6].map(i => parseFloat(grades[`q${i}`]) || 0);
-        const pq = qGrades.reduce((a,b)=>a+b, 0) / 6;
-
-        const currentScore = (c1*0.25) + (c2*0.25) + (c3*0.25) + (pq*0.25);
-        let finalGrade = currentScore;
-        const global = parseFloat(grades['global']);
-        if(!isNaN(global) && global > 0) {
-          const minC = Math.min(c1, c2, c3);
-          finalGrade = currentScore + Math.max(0, (global - minC)*0.25);
-        }
-
-        const reqC3 = Math.max(0, (55 - (c1*0.25 + c2*0.25 + pq*0.25)) / 0.25);
-
-        return {
-          currentScore,
-          finalGrade,
-          required: reqC3,
-          reqName: 'Certamen 3 (C3)',
-          conditions: [
-            { text: 'Nota final ≥ 55.0', passed: finalGrade >= 55, label: finalGrade >= 55 ? 'Cumplida ✓' : 'Pendiente' }
-          ]
-        };
-      }
-
-      return {
-        currentScore: 55,
-        finalGrade: 55,
-        required: 55,
-        reqName: 'Certamen Final',
-        conditions: [
-          { text: 'Nota final ≥ 55.0', passed: true, label: 'Cumplida ✓' }
-        ]
-      };
-    }
-
-    // COURSE VIEW WITH CATEGORY GROUPING
+    // COURSE DETAILED VIEW
     function renderCourse(container, courseId) {
       const course = state.semesters[state.currentSemester].courses.find(c => c.id === courseId);
       if(!course) return navigate('dashboard');
 
       const calc = calculateCourseGrade(courseId);
       const evalGroups = getCourseGroupedEvals(courseId);
-      
-      const allEvals = evalGroups.flatMap(g => g.items);
-      const pendingEvals = allEvals.filter(item => !state.grades[courseId]?.[item.id] || state.grades[courseId][item.id] === '');
       const globalGradeVal = state.grades[courseId]?.['global'] || '';
 
       container.innerHTML = `
@@ -667,7 +867,7 @@
             <button class="rules-btn" onclick="openRulesModal('${courseId}')">📖 Ver reglas</button>
           </div>
           <div class="hero-score-box">
-            <div class="hero-score">${calc.finalGrade.toFixed(1)}</div>
+            <div class="hero-score">${calc.hasGrades ? calc.finalGrade.toFixed(1) : '0.0'}</div>
             <div class="hero-max">/ 100.0</div>
           </div>
           <div>Puntaje acumulado actual: <strong>${calc.currentScore.toFixed(1)} pts</strong></div>
@@ -675,8 +875,8 @@
 
         <div class="required-card">
           <div style="font-size: 0.85rem; font-weight: 700; color: #854D0E; text-transform: uppercase;">Nota requerida para aprobar (55.0)</div>
-          <div class="required-number">${calc.required.toFixed(1)}</div>
-          <div style="font-size: 0.95rem; font-weight: 600; color: #713F12;">Puntaje necesario en <strong>${calc.reqName}</strong> para asegurar la aprobación directa.</div>
+          <div class="required-number">${calc.finalGrade >= 55 ? '0.0' : Math.min(100, Math.max(0, calc.required)).toFixed(1)}</div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: #713F12;">Puntaje estimado en <strong>${calc.reqName}</strong> o evaluaciones pendientes para asegurar la aprobación.</div>
         </div>
 
         <div class="course-grid">
@@ -686,40 +886,27 @@
               ${renderGroupedTables(courseId, evalGroups)}
             </div>
 
-            <!-- SIMULADOR INTERACTIVO -->
+            <!-- SIMULADOR INTERACTIVO DE PREDICCIÓN -->
             <div class="simulator-container">
-              <div class="simulator-title">🧪 HAY MÁS DE UN CAMINO</div>
-              <h4 style="font-size: 1.1rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem;">¿Y si te va mejor en otra evaluación?</h4>
-              <div class="simulator-sub">Compara combinaciones y elige una para calcular en tiempo real.</div>
+              <div class="simulator-title">🧪 PREDICCIÓN DE NOTAS PENDIENTES</div>
+              <h4 style="font-size: 1.1rem; font-weight: 800; color: #581C87; margin-bottom: 0.3rem;">Simula evaluaciones aún no realizadas</h4>
+              <div class="simulator-sub">Selecciona solo evaluaciones que no has rendido para calcular cuánto necesitas.</div>
 
-              <div class="simulator-controls">
-                <div class="sim-select-group">
-                  <span class="sim-select-label">Si en...</span>
-                  <select class="sim-select" id="simSourceEval" onchange="renderSimulatorRows('${courseId}')">
-                    ${pendingEvals.map(e => `<option value="${e.id}">${e.name}</option>`).join('')}
-                  </select>
-                </div>
-                <div class="sim-select-group">
-                  <span class="sim-select-label">Quiero calcular...</span>
-                  <select class="sim-select" id="simTargetType" onchange="renderSimulatorRows('${courseId}')">
-                    <option value="next">Otra nota pendiente</option>
-                    <option value="global">Certamen Global</option>
-                  </select>
-                </div>
-              </div>
-
-              <div id="simulatorRowsContainer"></div>
+              <div id="simulatorContent"></div>
             </div>
           </div>
 
           <!-- Columna Derecha -->
           <div>
             <div class="condition-card">
-              <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-main);">Las condiciones de tu ramo</h3>
+              <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-main);">Estado de tu ramo</h3>
+              <div style="margin-bottom: 1rem;">
+                <span class="status-pill ${calc.statusClass}">${calc.statusText}</span>
+              </div>
               ${calc.conditions.map(cond => `
                 <div class="condition-item">
                   <div class="condition-text">
-                    <span style="font-size: 1.2rem;">${cond.passed ? '🟢' : '⚪'}</span>
+                    <span style="font-size: 1.2rem;">${cond.passed ? '🟢' : '🟡'}</span>
                     ${cond.text}
                   </div>
                   <span class="condition-tag ${cond.passed ? 'tag-passed' : 'tag-pending'}">${cond.label}</span>
@@ -729,13 +916,13 @@
 
             <div class="global-card">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.4rem;">✦ Global</h3>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.4rem;">✦ Certamen Global</h3>
               </div>
-              <span class="global-tag">${globalGradeVal ? 'Rendido' : 'Situación aún por definir'}</span>
-              <p class="global-desc">Voluntario. Reemplaza el peor certamen incluso si baja tu nota. No requiere un mínimo de presentación.</p>
+              <span class="global-tag">${globalGradeVal ? 'Rendido' : 'Situación opcional'}</span>
+              <p class="global-desc">Voluntario. Reemplaza el certamen con menor nota si beneficia tu promedio final.</p>
               
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" style="font-size:0.8rem; color:var(--text-muted);">Nota de global</label>
+                <label class="form-label" style="font-size:0.8rem; color:var(--text-muted);">Nota de Global</label>
                 <div class="global-input-box">
                   <input type="number" class="global-input" placeholder="—" value="${globalGradeVal}" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', 'global', this.value)">
                   <span style="font-weight:700; color:var(--text-muted); font-size:0.9rem;">/100</span>
@@ -744,38 +931,14 @@
             </div>
 
             <div class="meta-card">
-              <div class="meta-title">Tu meta, con contexto.</div>
-              <div class="meta-desc">Un promedio alto no siempre basta. Rumbo revisa también los requisitos específicos de este ramo.</div>
+              <div class="meta-title">Planifica con anticipación</div>
+              <div class="meta-desc">Rumbo te permite visualizar tus metas de notas y mantener tus certámenes al día en tu calendario.</div>
             </div>
           </div>
         </div>
       `;
 
-      renderSimulatorRows(courseId);
-    }
-
-    function getCourseGroupedEvals(courseId) {
-      return [
-        {
-          groupName: 'Certámenes (75%)',
-          items: [
-            { id: 'c1', name: 'Certamen 1 (C1)', weight: '25%' },
-            { id: 'c2', name: 'Certamen 2 (C2)', weight: '25%' },
-            { id: 'c3', name: 'Certamen 3 (C3)', weight: '25%' }
-          ]
-        },
-        {
-          groupName: 'Controles de Lectura y Taller (25%)',
-          items: [
-            { id: 'q1', name: 'Control 1 (Q1)', weight: '4.16%' },
-            { id: 'q2', name: 'Control 2 (Q2)', weight: '4.16%' },
-            { id: 'q3', name: 'Control 3 (Q3)', weight: '4.16%' },
-            { id: 'q4', name: 'Control 4 (Q4)', weight: '4.16%' },
-            { id: 'q5', name: 'Control 5 (Q5)', weight: '4.16%' },
-            { id: 'q6', name: 'Control 6 (Q6)', weight: '4.16%' }
-          ]
-        }
-      ];
+      renderSimulatorControls(courseId, evalGroups);
     }
 
     function renderGroupedTables(courseId, groups) {
@@ -789,24 +952,24 @@
               <th>Evaluación</th>
               <th>Ponderación</th>
               <th>Nota (0 - 100)</th>
-              <th>Fecha</th>
+              <th>Fecha Programada</th>
             </tr>
           </thead>
           <tbody>
             ${g.items.map(item => {
-              const val = state.grades[courseId]?.[item.id] || '';
+              const val = state.grades[courseId]?.[item.id] !== undefined ? state.grades[courseId][item.id] : '';
               const dateVal = state.dates[courseId]?.[item.id] || '';
 
               return `
                 <tr>
                   <td style="font-weight: 700;">${item.name}</td>
-                  <td style="color: var(--text-muted);">${item.weight}</td>
+                  <td style="color: var(--text-muted);">${item.weightPercent}%</td>
                   <td>
-                    <input type="number" class="input-grade" value="${val}" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', '${item.id}', this.value)">
+                    <input type="number" class="input-grade" value="${val}" placeholder="—" min="0" max="100" onfocus="this.select()" onchange="updateGrade('${courseId}', '${item.id}', this.value)">
                   </td>
                   <td>
                     <input type="date" class="input-date" value="${dateVal}" onchange="updateDate('${courseId}', '${item.id}', this.value)">
-                    ${dateVal ? `<button class="btn-delete-date" onclick="updateDate('${courseId}', '${item.id}', '')">✕</button>` : ''}
+                    ${dateVal ? `<button class="btn-delete-date" title="Eliminar fecha" onclick="updateDate('${courseId}', '${item.id}', '')">✕</button>` : ''}
                   </td>
                 </tr>
               `;
@@ -816,21 +979,118 @@
       `).join('');
     }
 
-    function renderSimulatorRows(courseId) {
-      const container = document.getElementById('simulatorRowsContainer');
+    // FIXED SIMULATOR LOGIC: ONLY UNENTERED / PENDING EVALUATIONS SHOWN
+    function renderSimulatorControls(courseId, groups) {
+      const container = document.getElementById('simulatorContent');
       if(!container) return;
 
-      const calc = calculateCourseGrade(courseId);
+      const allEvals = groups.flatMap(g => g.items);
+      const userGrades = state.grades[courseId] || {};
 
-      container.innerHTML = [20, 40, 60, 80, 100].map(val => `
-        <div class="sim-row">
-          <div class="sim-grade">${val}</div>
-          <div class="sim-needed">
-            ${calc.required <= 0 ? '¡Ya apruebas el ramo!' : `Necesitas ${Math.max(0, calc.required).toFixed(1)} para obtener 55.0`}
+      // Filter EXCLUSIVELY pending evaluations (no grade entered)
+      const pendingEvals = allEvals.filter(e => userGrades[e.id] === undefined || userGrades[e.id] === '');
+
+      if(pendingEvals.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 1rem; background: white; border-radius: 10px; font-weight: 700; color: #581C87; text-align: center;">
+            ✨ ¡Todas las evaluaciones de esta asignatura ya tienen una nota asignada!
           </div>
-          <button class="btn-try" onclick="applySimGrade('${courseId}', 'c3', ${val})">Probar →</button>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="simulator-controls">
+          <div class="sim-select-group">
+            <span class="sim-select-label">Si en la evaluación...</span>
+            <select class="sim-select" id="simSourceEval" onchange="renderSimulatorRows('${courseId}')">
+              ${pendingEvals.map(e => `<option value="${e.id}">${e.name} (${e.weightPercent}%)</option>`).join('')}
+            </select>
+          </div>
+          <div class="sim-select-group">
+            <span class="sim-select-label">Quiero saber cuánto necesito en...</span>
+            <select class="sim-select" id="simTargetType" onchange="renderSimulatorRows('${courseId}')">
+              ${pendingEvals.map(e => `<option value="${e.id}">${e.name} (${e.weightPercent}%)</option>`).join('')}
+            </select>
+          </div>
         </div>
-      `).join('');
+        <div id="simulatorRowsContainer"></div>
+      `;
+
+      renderSimulatorRows(courseId);
+    }
+
+    function renderSimulatorRows(courseId) {
+      const container = document.getElementById('simulatorRowsContainer');
+      const sourceSelect = document.getElementById('simSourceEval');
+      const targetSelect = document.getElementById('simTargetType');
+      if(!container || !sourceSelect || !targetSelect) return;
+
+      const sourceId = sourceSelect.value;
+      const targetId = targetSelect.value;
+      
+      const evalGroups = getCourseGroupedEvals(courseId);
+      const allEvals = evalGroups.flatMap(g => g.items);
+
+      const sourceItem = allEvals.find(e => e.id === sourceId);
+      const targetItem = allEvals.find(e => e.id === targetId);
+
+      if(!sourceItem || !targetItem) return;
+
+      const userGrades = state.grades[courseId] || {};
+      const wSource = sourceItem.weightPercent / 100;
+      const wTarget = targetItem.weightPercent / 100;
+
+      // Sum of already entered grades (excluding simulated source and target)
+      let currentGradedScore = 0;
+      allEvals.forEach(item => {
+        if(item.id !== sourceId && item.id !== targetId) {
+          const val = parseFloat(userGrades[item.id]);
+          if(!isNaN(val)) {
+            currentGradedScore += val * (item.weightPercent / 100);
+          }
+        }
+      });
+
+      if(sourceId === targetId) {
+        container.innerHTML = [20, 40, 55, 70, 85, 100].map(val => {
+          const needed = (55.0 - currentGradedScore) / wSource;
+          let msg = '';
+          if(needed <= 0) msg = '¡Ya apruebas sin depender de esta nota!';
+          else if(needed > 100) msg = `Requiere ${needed.toFixed(1)} pts (Excede el máximo 100.0)`;
+          else msg = `Necesitas obtener ${Math.max(0, needed).toFixed(1)} pts en esta evaluación para alcanzar 55.0`;
+
+          return `
+            <div class="sim-row">
+              <div class="sim-grade">Opciones</div>
+              <div class="sim-needed">${msg}</div>
+            </div>
+          `;
+        }).slice(0, 1).join('');
+        return;
+      }
+
+      container.innerHTML = [20, 40, 60, 80, 100].map(gSource => {
+        const scoreWithSource = currentGradedScore + (gSource * wSource);
+        const neededInTarget = (55.0 - scoreWithSource) / wTarget;
+        let msg = '';
+
+        if(neededInTarget <= 0) {
+          msg = `¡Ya apruebas el ramo con ${gSource} en ${sourceItem.shortName}!`;
+        } else if(neededInTarget > 100) {
+          msg = `Requiere ${neededInTarget.toFixed(1)} en ${targetItem.shortName} (Supera nota máx 100)`;
+        } else {
+          msg = `Necesitas <strong>${neededInTarget.toFixed(1)}</strong> en <strong>${targetItem.shortName}</strong> para aprobar con 55.0`;
+        }
+
+        return `
+          <div class="sim-row">
+            <div class="sim-grade">${gSource}</div>
+            <div class="sim-needed">Si obtienes ${gSource} en ${sourceItem.shortName}: ${msg}</div>
+            <button class="btn-try" onclick="applySimGrade('${courseId}', '${sourceId}', ${gSource})">Probar →</button>
+          </div>
+        `;
+      }).join('');
     }
 
     function updateGrade(courseId, evalId, value) {
@@ -838,6 +1098,8 @@
       let cleanVal = value;
       if(cleanVal !== '' && !isNaN(cleanVal)) {
         cleanVal = String(parseFloat(cleanVal));
+      } else {
+        cleanVal = '';
       }
       state.grades[courseId][evalId] = cleanVal;
       saveState();
@@ -855,258 +1117,185 @@
       updateGrade(courseId, evalId, val);
     }
 
-    // PANEL ADMINISTRADOR Y CREADOR AUTOMÁTICO DE RAMOS POR ARCHIVO (PDF/TXT)
-    function renderAdminPanel(container) {
-      container.innerHTML = `
-        <div class="card">
-          <h2 style="font-weight:800; margin-bottom:0.5rem;">⚙️ Panel de Administración Rumbo</h2>
-          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Añade, modifica y elimina asignaturas del catálogo sin tocar código.</p>
-
-          <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
-            <button class="btn-primary" onclick="openCreateCourseModal()">+ Crear Ramo Manualmente</button>
-            <button class="btn-secondary" onclick="openAutoParserModal()">🤖 Creador Automático por Documento / Pauta (PDF)</button>
-          </div>
-
-          <h3 style="font-weight:800; margin-bottom:1rem;">Catálogo de Ramos Actuales</h3>
-          <div id="adminCatalogList">
-            ${state.catalog.map((c, idx) => `
-              <div class="prof-card">
-                <div>
-                  <span class="course-badge ${c.bg}">${c.id}</span>
-                  <span style="font-weight:700; margin-left:0.5rem;">${c.name}</span>
-                  <div class="prof-meta" style="margin-top:0.2rem;">${c.sct} SCT · Color: <span style="display:inline-block; width:12px; height:12px; background:${c.hex}; border-radius:3px;"></span></div>
-                </div>
-                <div>
-                  <button class="btn-danger" onclick="deleteCatalogCourse(${idx})">Eliminar Ramo</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function openCreateCourseModal() {
-      const modal = document.getElementById('modalOverlay');
-      const body = document.getElementById('modalBody');
-
-      body.innerHTML = `
-        <h2 style="margin-bottom:1.5rem;">Crear Nuevo Ramo en el Catálogo</h2>
-        <div class="form-group">
-          <label class="form-label">Sigla Ramo (Ej: FIS120)</label>
-          <input type="text" class="form-input" id="newCourseSigla" placeholder="FIS120">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nombre de la Asignatura</label>
-          <input type="text" class="form-input" id="newCourseName" placeholder="Física Electromagnetismo">
-        </div>
-        <div style="display:flex; gap:1rem;">
-          <div class="form-group" style="flex:1;">
-            <label class="form-label">Créditos SCT</label>
-            <input type="number" class="form-input" id="newCourseSct" value="6">
-          </div>
-          <div class="form-group" style="flex:1;">
-            <label class="form-label">Color Distintivo (Hex)</label>
-            <input type="color" class="form-input" id="newCourseHex" value="#2563EB" style="height:45px;">
-          </div>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
-          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-          <button class="btn-primary" onclick="saveNewCourse()">Guardar en Catálogo</button>
-        </div>
-      `;
-      modal.classList.add('open');
-    }
-
-    function saveNewCourse() {
-      const sigla = document.getElementById('newCourseSigla').value.toUpperCase().trim();
-      const name = document.getElementById('newCourseName').value.trim();
-      const sct = parseInt(document.getElementById('newCourseSct').value) || 6;
-      const hex = document.getElementById('newCourseHex').value;
-
-      if(!sigla || !name) return alert('Por favor ingresa la sigla y el nombre del ramo.');
-
-      state.catalog.push({
-        id: sigla,
-        name: name,
-        sct: sct,
-        bg: 'bg-mat071',
-        hex: hex
-      });
-
-      saveState();
-      closeModal();
-      navigate('admin');
-    }
-
-    function deleteCatalogCourse(idx) {
-      if(confirm('¿Seguro que deseas eliminar esta asignatura del catálogo?')) {
-        state.catalog.splice(idx, 1);
-        saveState();
-        navigate('admin');
-      }
-    }
-
-    // CREADOR AUTOMÁTICO POR DOCUMENTO / PAUTA (PDF & TXT)
-    function openAutoParserModal() {
-      const modal = document.getElementById('modalOverlay');
-      const body = document.getElementById('modalBody');
-
-      body.innerHTML = `
-        <h2 style="margin-bottom:1rem;">🤖 Creador Automático por Documento / Pauta</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">Sube un archivo PDF o TXT con el syllabus o copia directamente el texto de la pauta.</p>
-
-        <div class="file-drop-area" onclick="document.getElementById('pautaFileInput').click()">
-          <span style="font-size:2rem; display:block; margin-bottom:0.5rem;">📄</span>
-          <strong style="color:var(--usm-green);">Haz clic para subir tu PDF o TXT</strong>
-          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">Extracción inteligente automática de evaluaciones</div>
-          <input type="file" id="pautaFileInput" accept=".pdf,.txt" style="display:none;" onchange="handleFileUpload(this.files)">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Texto Extraído del Documento / Pauta</label>
-          <textarea class="form-textarea" id="pautaText" placeholder="Ejemplo:
-Asignatura: FIS120 Física Electromagnetismo (6 SCT)
-Evaluaciones:
-- Certamen 1 (25%)
-- Certamen 2 (25%)
-- Certamen 3 (25%)
-- Controles (25%)"></textarea>
-        </div>
-
-        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
-          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-          <button class="btn-primary" onclick="parseAndCreateCourse()">Procesar y Crear Ramo</button>
-        </div>
-      `;
-      modal.classList.add('open');
-    }
-
-    function handleFileUpload(files) {
-      if(!files || files.length === 0) return;
-      const file = files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        const text = e.target.result;
-        document.getElementById('pautaText').value = text;
-      };
-
-      reader.readAsText(file);
-    }
-
-    function parseAndCreateCourse() {
-      const text = document.getElementById('pautaText').value;
-      if(!text.trim()) return alert('Sube un archivo o pega el texto de la pauta.');
-
-      const siglaMatch = text.match(/([A-Z]{3}-?\d{3})/i);
-      const sigla = siglaMatch ? siglaMatch[1].replace('-', '').toUpperCase() : `RAMO${Math.floor(Math.random()*1000)}`;
-
-      const nameMatch = text.match(/Asignatura:\s*([^\n]+)/i) || text.match(/Curso:\s*([^\n]+)/i);
-      const name = nameMatch ? nameMatch[1].trim() : `Asignatura ${sigla}`;
-
-      state.catalog.push({
-        id: sigla,
-        name: name,
-        sct: 6,
-        bg: 'bg-mat070',
-        hex: '#0D473B'
-      });
-
-      saveState();
-      closeModal();
-      alert(`¡Ramo ${sigla} CREADO CON ÉXITO! Ya está disponible en tu catálogo.`);
-      navigate('admin');
-    }
-
-    // CALENDAR VIEW
+    // FULL INTERACTIVE CALENDAR WITH MONTH NAVIGATION
     function renderCalendar(container) {
+      const year = state.calYear || 2026;
+      const month = state.calMonth !== undefined ? state.calMonth : 9;
+
       container.innerHTML = `
         <div class="card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="font-weight: 800;">📅 Calendario de Evaluaciones 2026</h2>
-            <button class="btn-primary" onclick="openAddEventModal()">+ Añadir Fecha / Evento</button>
+          <div class="cal-header-bar">
+            <div>
+              <h2 style="font-weight: 800;">📅 Calendario de Evaluaciones</h2>
+              <div style="font-weight: 700; color: var(--usm-green); font-size: 1.2rem; margin-top:0.2rem;">
+                ${monthNames[month]} ${year}
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="cal-nav-btn" onclick="changeCalMonth(-1)">◀ Anterior</button>
+              <button class="cal-nav-btn" onclick="changeCalMonth(1)">Siguiente ▶</button>
+              <button class="btn-primary" onclick="openAddEventModal()">+ Añadir Evento</button>
+            </div>
           </div>
+
           <div class="calendar-grid">
-            <div class="cal-day-header">LUN</div><div class="cal-day-header">MAR</div><div class="cal-day-header">MIÉ</div>
-            <div class="cal-day-header">JUE</div><div class="cal-day-header">VIE</div><div class="cal-day-header">SÁB</div><div class="cal-day-header">DOM</div>
+            <div class="cal-day-header">LUN</div>
+            <div class="cal-day-header">MAR</div>
+            <div class="cal-day-header">MIÉ</div>
+            <div class="cal-day-header">JUE</div>
+            <div class="cal-day-header">VIE</div>
+            <div class="cal-day-header">SÁB</div>
+            <div class="cal-day-header">DOM</div>
             ${renderCalCells()}
           </div>
         </div>
       `;
     }
 
+    function changeCalMonth(delta) {
+      state.calMonth = (state.calMonth !== undefined ? state.calMonth : 9) + delta;
+      if (state.calMonth < 0) {
+        state.calMonth = 11;
+        state.calYear = (state.calYear || 2026) - 1;
+      } else if (state.calMonth > 11) {
+        state.calMonth = 0;
+        state.calYear = (state.calYear || 2026) + 1;
+      }
+      saveState();
+      renderCalendar(document.getElementById('main-content'));
+    }
+
     function renderCalCells() {
-      let cells = '';
+      const year = state.calYear || 2026;
+      const month = state.calMonth !== undefined ? state.calMonth : 9;
+
+      const firstDay = new Date(year, month, 1);
+      let startDayOfWeek = firstDay.getDay(); // 0: Sun, 1: Mon...
+      startDayOfWeek = (startDayOfWeek + 6) % 7; // Convert to Mon:0..Sun:6
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
       const courses = state.semesters[state.currentSemester]?.courses || [];
 
-      for(let day = 1; day <= 31; day++) {
-        const dayStr = `2026-10-${day < 10 ? '0'+day : day}`;
-        
+      let cells = '';
+
+      // Empty offset cells for previous month
+      for (let i = 0; i < startDayOfWeek; i++) {
+        cells += `<div class="cal-day-cell cal-day-empty"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const monthStr = (month + 1) < 10 ? '0' + (month + 1) : (month + 1);
+        const dayStr = day < 10 ? '0' + day : day;
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+
         let eventsHTML = '';
+
         courses.forEach(c => {
           const cDates = state.dates[c.id] || {};
-          Object.keys(cDates).forEach(evKey => {
-            if(cDates[evKey] === dayStr) {
-              eventsHTML += `<div class="cal-event-tag ${c.bg}">${c.id} · ${evKey.toUpperCase()}</div>`;
-            }
+          const evalGroups = getCourseGroupedEvals(c.id);
+          evalGroups.forEach(g => {
+            g.items.forEach(item => {
+              if (cDates[item.id] === dateStr) {
+                eventsHTML += `<div class="cal-event-tag ${c.bg}">${c.id} · ${item.shortName || item.name}</div>`;
+              }
+            });
           });
         });
 
-        state.customEvents.filter(e => e.date === dayStr).forEach(e => {
+        state.customEvents.filter(e => e.date === dateStr).forEach(e => {
           const bgClass = e.courseId === 'PERSONAL' ? 'bg-personal' : (courses.find(c=>c.id===e.courseId)?.bg || 'bg-personal');
           eventsHTML += `<div class="cal-event-tag ${bgClass}">${e.title}</div>`;
         });
 
         cells += `
-          <div class="cal-day-cell" onclick="openDayModal('${dayStr}', ${day})">
+          <div class="cal-day-cell" onclick="openDayModal('${dateStr}')">
             <div class="cal-day-num">${day}</div>
             ${eventsHTML}
           </div>
         `;
       }
+
       return cells;
     }
 
-    function openDayModal(dateStr, dayNum) {
+    // DAY MODAL WITH DIRECT DATE MODIFICATION & EDITING
+    function openDayModal(dateStr) {
       const modal = document.getElementById('modalOverlay');
       const body = document.getElementById('modalBody');
+
+      const parts = dateStr.split('-');
+      const y = parts[0];
+      const m = parseInt(parts[1]) - 1;
+      const d = parseInt(parts[2]);
 
       const courses = state.semesters[state.currentSemester]?.courses || [];
       let evList = [];
 
       courses.forEach(c => {
         const cDates = state.dates[c.id] || {};
-        Object.keys(cDates).forEach(evKey => {
-          if(cDates[evKey] === dateStr) {
-            evList.push({ type: 'course', courseId: c.id, name: `${c.name} - ${evKey.toUpperCase()}`, evKey });
-          }
+        const evalGroups = getCourseGroupedEvals(c.id);
+        evalGroups.forEach(g => {
+          g.items.forEach(item => {
+            if (cDates[item.id] === dateStr) {
+              evList.push({ type: 'course', courseId: c.id, name: `${c.name} - ${item.name}`, evalId: item.id, dateStr });
+            }
+          });
         });
       });
 
-      state.customEvents.filter(e => e.date === dateStr).forEach((e, idx) => {
-        evList.push({ type: 'custom', name: e.title, courseId: e.courseId, idx });
+      state.customEvents.forEach((e, idx) => {
+        if(e.date === dateStr) {
+          evList.push({ type: 'custom', name: e.title, courseId: e.courseId, idx, dateStr });
+        }
       });
 
       body.innerHTML = `
-        <h2 style="margin-bottom: 1rem;">Evaluaciones del Octubre ${dayNum}, 2026</h2>
+        <h2 style="margin-bottom: 0.3rem;">Evaluaciones del ${d} de ${monthNames[m]}, ${y}</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 1.5rem;">Puedes modificar la fecha de cualquier evaluación si cambió de día.</p>
+        
         <div style="margin-bottom: 1.5rem;">
           ${evList.length > 0 ? evList.map(item => `
-            <div class="prof-card">
-              <div>
-                <div class="prof-name">${item.name}</div>
-                <div class="prof-meta">${item.courseId}</div>
+            <div class="prof-card" style="flex-direction:column; align-items:flex-start; gap:0.6rem;">
+              <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                <div>
+                  <div class="prof-name">${item.name}</div>
+                  <div class="prof-meta">${item.courseId}</div>
+                </div>
+                <button class="btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="removeEventDate('${item.type}', '${item.courseId}', '${item.evalId}', ${item.idx})">🗑️ Quitar</button>
               </div>
-              <button style="background:none; border:none; cursor:pointer;" onclick="deleteEvent('${item.type}', '${item.courseId}', '${item.evKey}', ${item.idx})">🗑️</button>
+              ${item.type === 'course' ? `
+                <div style="display:flex; align-items:center; gap:0.5rem; width:100%;">
+                  <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Reagendar a:</span>
+                  <input type="date" class="input-date" value="${item.dateStr}" onchange="changeEvaluationDate('${item.courseId}', '${item.evalId}', this.value)">
+                </div>
+              ` : ''}
             </div>
-          `).join('') : '<p style="color: var(--text-muted);">No hay evaluaciones en esta fecha.</p>'}
+          `).join('') : '<p style="color: var(--text-muted); padding: 1rem 0;">No hay evaluaciones ni eventos en esta fecha.</p>'}
         </div>
+        
         <div style="display:flex; gap:1rem;">
-          <button class="btn-primary" onclick="openAddEventModal('${dateStr}')">+ Añadir a esta fecha</button>
+          <button class="btn-primary" onclick="openAddEventModal('${dateStr}')">+ Añadir evento aquí</button>
           <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
         </div>
       `;
       modal.classList.add('open');
+    }
+
+    function changeEvaluationDate(courseId, evalId, newDate) {
+      updateDate(courseId, evalId, newDate);
+      closeModal();
+      renderCalendar(document.getElementById('main-content'));
+    }
+
+    function removeEventDate(type, courseId, evalId, customIdx) {
+      if(type === 'course') {
+        updateDate(courseId, evalId, '');
+      } else {
+        state.customEvents.splice(customIdx, 1);
+        saveState();
+      }
+      closeModal();
+      renderCalendar(document.getElementById('main-content'));
     }
 
     function openAddEventModal(defaultDate = '') {
@@ -1114,36 +1303,37 @@ Evaluaciones:
       const body = document.getElementById('modalBody');
 
       const courses = state.semesters[state.currentSemester]?.courses || [];
+      const initialDate = defaultDate || `${state.calYear || 2026}-${((state.calMonth || 9)+1).toString().padStart(2,'0')}-15`;
 
       body.innerHTML = `
-        <h2 style="margin-bottom: 1.5rem;">Añadir Fecha / Evento</h2>
+        <h2 style="margin-bottom: 1.5rem;">Añadir Evento o Tarea Personal</h2>
         <div class="form-group">
-          <label class="form-label">Título</label>
-          <input type="text" class="form-input" id="eventTitle" placeholder="Ej: Entrega Tarea 2">
+          <label class="form-label">Título del Evento</label>
+          <input type="text" class="form-input" id="eventTitle" placeholder="Ej: Entrega Tarea de Programación">
         </div>
         <div style="display:flex; gap:1rem;">
           <div class="form-group" style="flex:1;">
             <label class="form-label">Fecha</label>
-            <input type="date" class="form-input" id="eventDate" value="${defaultDate || '2026-10-15'}">
+            <input type="date" class="form-input" id="eventDate" value="${initialDate}">
           </div>
           <div class="form-group" style="flex:1;">
-            <label class="form-label">Sigla Ramo</label>
+            <label class="form-label">Asignatura / Categoría</label>
             <select class="form-select" id="eventCourse">
               ${courses.map(c => `<option value="${c.id}">${c.id} - ${c.name}</option>`).join('')}
-              <option value="PERSONAL">Personal (General)</option>
+              <option value="PERSONAL">Personal / General</option>
             </select>
           </div>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
           <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-          <button class="btn-primary" onclick="saveCustomEvent()">Guardar Fecha</button>
+          <button class="btn-primary" onclick="saveCustomEvent()">Guardar Evento</button>
         </div>
       `;
       modal.classList.add('open');
     }
 
     function saveCustomEvent() {
-      const title = document.getElementById('eventTitle').value;
+      const title = document.getElementById('eventTitle').value.trim();
       const date = document.getElementById('eventDate').value;
       const courseId = document.getElementById('eventCourse').value;
 
@@ -1155,15 +1345,67 @@ Evaluaciones:
       navigate('calendar');
     }
 
-    function deleteEvent(type, courseId, evKey, idx) {
-      if(type === 'course') {
-        updateDate(courseId, evKey, '');
-      } else {
-        state.customEvents.splice(idx, 1);
-        saveState();
-      }
-      closeModal();
-      navigate('calendar');
+    // RENAMED & IMPROVED "HORARIOS DE CONSULTA" WITH CATEGORY SUBDIVISION
+    function renderProfs(container) {
+      const activeFilter = state.selectedProfFilter || 'ALL';
+
+      container.innerHTML = `
+        <div class="card">
+          <h2 style="margin-bottom: 0.3rem; font-weight: 800;">👨‍🏫 Horarios de Consulta</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.2rem;">Atención de Alumnos · Departamento de Matemática (DMat) y Asignaturas (2026-2)</p>
+          
+          <div class="filter-pills">
+            <button class="filter-pill ${activeFilter === 'ALL' ? 'active' : ''}" onclick="filterProfsByCategory('ALL')">Todos los Ramos</button>
+            <button class="filter-pill ${activeFilter === 'MAT070' ? 'active' : ''}" onclick="filterProfsByCategory('MAT070')">MAT070 (Cálculo Intro)</button>
+            <button class="filter-pill ${activeFilter === 'MAT061' ? 'active' : ''}" onclick="filterProfsByCategory('MAT061')">MAT061 (Álgebra Lineal)</button>
+            <button class="filter-pill ${activeFilter === 'MAT071' ? 'active' : ''}" onclick="filterProfsByCategory('MAT071')">MAT071 (Cálculo I)</button>
+            <button class="filter-pill ${activeFilter === 'FIS111' ? 'active' : ''}" onclick="filterProfsByCategory('FIS111')">Física</button>
+            <button class="filter-pill ${activeFilter === 'INF129' ? 'active' : ''}" onclick="filterProfsByCategory('INF129')">Programación</button>
+          </div>
+
+          <input type="text" class="search-bar" id="profSearchBar" placeholder="Buscar por nombre de profesor u oficina (ej. A-157)..." onkeyup="filterProfsList()">
+          <div id="profs-list">
+            ${renderProfsList(getFilteredProfs())}
+          </div>
+        </div>
+      `;
+    }
+
+    function filterProfsByCategory(cat) {
+      state.selectedProfFilter = cat;
+      renderProfs(document.getElementById('main-content'));
+    }
+
+    function getFilteredProfs() {
+      const cat = state.selectedProfFilter || 'ALL';
+      const search = (document.getElementById('profSearchBar')?.value || '').toLowerCase();
+
+      return profesoresConsulta.filter(p => {
+        const matchesCategory = (cat === 'ALL') || (p.ramo === cat);
+        const matchesSearch = p.nombre.toLowerCase().includes(search) || p.oficina.toLowerCase().includes(search) || p.ramo.toLowerCase().includes(search);
+        return matchesCategory && matchesSearch;
+      });
+    }
+
+    function filterProfsList() {
+      document.getElementById('profs-list').innerHTML = renderProfsList(getFilteredProfs());
+    }
+
+    function renderProfsList(list) {
+      if(list.length === 0) return '<p style="color:var(--text-muted); text-align:center; padding:1.5rem;">No se encontraron horarios para los criterios seleccionados.</p>';
+
+      return list.map(p => `
+        <div class="prof-card">
+          <div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="prof-name">${p.nombre}</span>
+              <span class="course-badge bg-mat070" style="font-size:0.65rem;">${p.ramo}</span>
+            </div>
+            <div class="prof-meta" style="margin-top:0.3rem;">📧 ${p.email} | 🏢 Oficina: <strong>${p.oficina}</strong></div>
+            <div style="font-size: 0.85rem; margin-top: 0.3rem; font-weight:600;">⏰ ${p.horario}</div>
+          </div>
+        </div>
+      `).join('');
     }
 
     // CATALOG & LIBRARY MODAL
@@ -1276,38 +1518,97 @@ Evaluaciones:
       navigate('library');
     }
 
-    // PROFS VIEW
-    function renderProfs(container) {
+    // ADMIN PANEL
+    function renderAdminPanel(container) {
       container.innerHTML = `
         <div class="card">
-          <h2 style="margin-bottom: 0.5rem; font-weight: 800;">👨‍🏫 Horarios de Consulta DMat</h2>
-          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Departamento de Matemática · Campus San Joaquín (2026-2)</p>
-          <input type="text" class="search-bar" placeholder="Buscar por profesor u oficina (ej. A-157)..." onkeyup="filterProfs(this.value)">
-          <div id="profs-list">
-            ${renderProfsList(profsDMat)}
+          <h2 style="font-weight:800; margin-bottom:0.5rem;">⚙️ Panel de Administración Rumbo</h2>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Añade y modifica asignaturas del catálogo sin tocar código.</p>
+
+          <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+            <button class="btn-primary" onclick="openCreateCourseModal()">+ Crear Ramo Manualmente</button>
+          </div>
+
+          <h3 style="font-weight:800; margin-bottom:1rem;">Catálogo de Ramos Actuales</h3>
+          <div id="adminCatalogList">
+            ${state.catalog.map((c, idx) => `
+              <div class="prof-card">
+                <div>
+                  <span class="course-badge ${c.bg}">${c.id}</span>
+                  <span style="font-weight:700; margin-left:0.5rem;">${c.name}</span>
+                  <div class="prof-meta" style="margin-top:0.2rem;">${c.sct} SCT · Color: <span style="display:inline-block; width:12px; height:12px; background:${c.hex}; border-radius:3px;"></span></div>
+                </div>
+                <div>
+                  <button class="btn-danger" onclick="deleteCatalogCourse(${idx})">Eliminar Ramo</button>
+                </div>
+              </div>
+            `).join('')}
           </div>
         </div>
       `;
     }
 
-    function renderProfsList(list) {
-      return list.map(p => `
-        <div class="prof-card">
-          <div>
-            <div class="prof-name">${p.nombre}</div>
-            <div class="prof-meta">📧 ${p.email} | 🏢 Oficina: <strong>${p.oficina}</strong></div>
-            <div style="font-size: 0.85rem; margin-top: 0.3rem;">⏰ ${p.horario}</div>
+    function openCreateCourseModal() {
+      const modal = document.getElementById('modalOverlay');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <h2 style="margin-bottom:1.5rem;">Crear Nuevo Ramo en el Catálogo</h2>
+        <div class="form-group">
+          <label class="form-label">Sigla Ramo (Ej: FIS120)</label>
+          <input type="text" class="form-input" id="newCourseSigla" placeholder="FIS120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre de la Asignatura</label>
+          <input type="text" class="form-input" id="newCourseName" placeholder="Física Electromagnetismo">
+        </div>
+        <div style="display:flex; gap:1rem;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Créditos SCT</label>
+            <input type="number" class="form-input" id="newCourseSct" value="6">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Color Distintivo (Hex)</label>
+            <input type="color" class="form-input" id="newCourseHex" value="#2563EB" style="height:45px;">
           </div>
         </div>
-      `).join('');
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button class="btn-primary" onclick="saveNewCourse()">Guardar en Catálogo</button>
+        </div>
+      `;
+      modal.classList.add('open');
     }
 
-    function filterProfs(query) {
-      const filtered = profsDMat.filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()) || p.oficina.toLowerCase().includes(query.toLowerCase()));
-      document.getElementById('profs-list').innerHTML = renderProfsList(filtered);
+    function saveNewCourse() {
+      const sigla = document.getElementById('newCourseSigla').value.toUpperCase().trim();
+      const name = document.getElementById('newCourseName').value.trim();
+      const sct = parseInt(document.getElementById('newCourseSct').value) || 6;
+      const hex = document.getElementById('newCourseHex').value;
+
+      if(!sigla || !name) return alert('Por favor ingresa la sigla y el nombre del ramo.');
+
+      state.catalog.push({
+        id: sigla,
+        name: name,
+        sct: sct,
+        bg: 'bg-mat071',
+        hex: hex
+      });
+
+      saveState();
+      closeModal();
+      navigate('admin');
     }
 
-    // MODAL UTILS
+    function deleteCatalogCourse(idx) {
+      if(confirm('¿Seguro que deseas eliminar esta asignatura del catálogo?')) {
+        state.catalog.splice(idx, 1);
+        saveState();
+        navigate('admin');
+      }
+    }
+
     function closeModal() {
       document.getElementById('modalOverlay').classList.remove('open');
     }
@@ -1319,16 +1620,16 @@ Evaluaciones:
       body.innerHTML = `
         <h2 style="margin-bottom: 1rem;">Reglas de Evaluación ${courseId}</h2>
         <p style="margin-bottom: 1rem; line-height: 1.6;">
-          <strong>Nota de Presentación (NP):</strong> 0.25 × C1 + 0.25 × C2 + 0.25 × C3 + 0.25 × PQ<br>
-          <strong>Aprobación:</strong> Nota final ≥ 55.<br>
-          <strong>Certamen Global:</strong> Voluntario. Reemplaza la nota más baja de los certámenes si beneficia al alumno.
+          <strong>Nota de Presentación (NP):</strong> Calculada a partir de las ponderaciones de cada certamen y controles del programa.<br>
+          <strong>Aprobación:</strong> Nota final acumulada ≥ 55.0.<br>
+          <strong>Certamen Global:</strong> Opcional / Voluntario. Reemplaza el certamen más bajo si este beneficia la nota final.
         </p>
         <button class="btn-primary" onclick="closeModal()">Entendido</button>
       `;
       modal.classList.add('open');
     }
 
-    // Initialize app
+    // Initialize application
     init();
   </script>
 </body>
